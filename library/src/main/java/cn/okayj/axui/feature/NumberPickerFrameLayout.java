@@ -28,23 +28,23 @@ public class NumberPickerFrameLayout extends FrameLayout {
     private final int DEFAULT_MAX_NUMBER = Integer.MAX_VALUE;
     private final int DEFAULT_NUMBER = DEFAULT_MIN_NUMBER;
 
-    private int mNumber;// TODO: 16/5/8 init
-    private int mMinNumber;// TODO: 16/5/8 init
-    private int mMaxNumber;// TODO: 16/5/8 init
+    private int mNumber;
+    private int mMinNumber;
+    private int mMaxNumber;
 
     private boolean mPlusActivated = true;
     private boolean mMinusActivated = true;
     private boolean mReachMax = false;
     private boolean mReachMin = false;
 
-    private boolean mAdjustToBound = false;// TODO: 16/5/8 init
+    private boolean mAdjustToBound = false;
 
-    private boolean mPlusButtonAutoActivated = true;// TODO: 16/5/8 init
-    private boolean mMinusButtonAutoActivated = true;// TODO: 16/5/8 init
+    private boolean mPlusButtonAutoActivated = true;
+    private boolean mMinusButtonAutoActivated = true;
 
-    private int mResetStrategy = STRATEGY_RESET_NUMBER_TO_MIN;// TODO: 16/5/8 init
+    private int mResetStrategy = STRATEGY_RESET_NUMBER_TO_MIN;
 
-    private int mStep = 1;// TODO: 16/5/8 init
+    private int mStep = 1;
 
     private int mNumberTextViewId;
     private int mPlusButtonId;
@@ -88,7 +88,18 @@ public class NumberPickerFrameLayout extends FrameLayout {
             throw new RuntimeException("Ids of parts of number picker should not be same");
         }
 
+        mMinNumber = a.getInt(R.styleable.NumberPickerFrameLayout_minNumber,DEFAULT_MIN_NUMBER);
+        mMaxNumber = a.getInt(R.styleable.NumberPickerFrameLayout_maxNumber,DEFAULT_MAX_NUMBER);
+        mNumber = a.getInt(R.styleable.NumberPickerFrameLayout_number,DEFAULT_NUMBER);
 
+        mPlusActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerPlusAutoActivated,true);
+        mMinusActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerMinusAutoActivated,true);
+
+        mAdjustToBound = a.getBoolean(R.styleable.NumberPickerFrameLayout_adjust_to_bound,true);
+
+        mStep = a.getInt(R.styleable.NumberPickerFrameLayout_step,1);
+
+        a.recycle();
     }
 
     public final void setPlusActivated(boolean active){
@@ -119,9 +130,8 @@ public class NumberPickerFrameLayout extends FrameLayout {
         setNumber(number,FLAG_SET_NUMBER_DIRECT);
     }
 
-    private void setNumber(int number, int source){
+    private void setNumber(int aimNumber, int source){
         int preNumber = mNumber;
-        int aimNumber = number;
 
         if(aimNumber > mMaxNumber){
             if(mAdjustToBound) {
@@ -197,8 +207,6 @@ public class NumberPickerFrameLayout extends FrameLayout {
             if(onInternalPrePlus(aimNumber)) {
                 setNumber(aimNumber,FLAG_SET_NUMBER_FROM_PLUS);
             }
-        }else {
-
         }
     }
 
@@ -209,8 +217,6 @@ public class NumberPickerFrameLayout extends FrameLayout {
             if(onInternalPreMinus(aimNumber)){
                 setNumber(aimNumber,FLAG_SET_NUMBER_FROM_MINUS);
             }
-        }else {
-
         }
     }
 
@@ -399,6 +405,14 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if(null == mMinusButton){
             throw new RuntimeException("Can not find minus button");
         }
+
+        initState();
+    }
+
+    private void initState(){
+        setBounds(mMinNumber,mMaxNumber);
+        refreshButtonState();
+        setNumber(mNumber);
     }
 
     public interface NumberPickerListener {
