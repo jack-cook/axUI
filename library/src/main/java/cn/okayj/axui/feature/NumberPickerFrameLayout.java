@@ -34,8 +34,6 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     private boolean mPlusActivated = true;
     private boolean mMinusActivated = true;
-    private boolean mReachMax = false;
-    private boolean mReachMin = false;
 
     private boolean mAdjustToBound = false;
 
@@ -51,7 +49,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
     private int mMinusButtonId;
 
     private TextView mNumberTextView;
-    private View mPlusButton,mMinusButton;
+    private View mPlusButton, mMinusButton;
 
     private NumberPickerListener mNumberPickerListener;
     private PreEventListener mPreEventListener;
@@ -74,41 +72,41 @@ public class NumberPickerFrameLayout extends FrameLayout {
         init(context, attrs);
     }
 
-    private void init(Context context, AttributeSet attrs){
+    private void init(Context context, AttributeSet attrs) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.NumberPickerFrameLayout);
-        mNumberTextViewId = a.getInteger(R.styleable.NumberPickerFrameLayout_pickerTextViewId,0);
-        mPlusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerPlusButtonId,0);
-        mMinusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerMinusButtonId,0);
+        mNumberTextViewId = a.getInteger(R.styleable.NumberPickerFrameLayout_pickerTextViewId, 0);
+        mPlusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerPlusButtonId, 0);
+        mMinusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerMinusButtonId, 0);
 
-        if(0 == mNumberTextViewId || 0 == mPlusButtonId || 0 == mMinusButtonId){
+        if (0 == mNumberTextViewId || 0 == mPlusButtonId || 0 == mMinusButtonId) {
             throw new RuntimeException("Ids of parts of number picker are not specified");
         }
 
-        if(mNumberTextViewId == mPlusButtonId || mNumberTextViewId == mMinusButtonId || mPlusButtonId == mMinusButtonId){
+        if (mNumberTextViewId == mPlusButtonId || mNumberTextViewId == mMinusButtonId || mPlusButtonId == mMinusButtonId) {
             throw new RuntimeException("Ids of parts of number picker should not be same");
         }
 
-        mMinNumber = a.getInt(R.styleable.NumberPickerFrameLayout_minNumber,DEFAULT_MIN_NUMBER);
-        mMaxNumber = a.getInt(R.styleable.NumberPickerFrameLayout_maxNumber,DEFAULT_MAX_NUMBER);
-        mNumber = a.getInt(R.styleable.NumberPickerFrameLayout_number,DEFAULT_NUMBER);
+        mMinNumber = a.getInt(R.styleable.NumberPickerFrameLayout_minNumber, DEFAULT_MIN_NUMBER);
+        mMaxNumber = a.getInt(R.styleable.NumberPickerFrameLayout_maxNumber, DEFAULT_MAX_NUMBER);
+        mNumber = a.getInt(R.styleable.NumberPickerFrameLayout_number, DEFAULT_NUMBER);
 
-        mPlusActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerPlusAutoActivated,true);
-        mMinusActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerMinusAutoActivated,true);
+        mPlusButtonAutoActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerPlusAutoActivated, true);
+        mMinusButtonAutoActivated = a.getBoolean(R.styleable.NumberPickerFrameLayout_pickerMinusAutoActivated, true);
 
-        mAdjustToBound = a.getBoolean(R.styleable.NumberPickerFrameLayout_adjust_to_bound,true);
+        mAdjustToBound = a.getBoolean(R.styleable.NumberPickerFrameLayout_adjust_to_bound, true);
 
-        mStep = a.getInt(R.styleable.NumberPickerFrameLayout_step,1);
+        mStep = a.getInt(R.styleable.NumberPickerFrameLayout_step, 1);
 
         a.recycle();
     }
 
-    public final void setPlusActivated(boolean active){
+    public final void setPlusActivated(boolean active) {
         mPlusActivated = active;
         mMinusButtonAutoActivated = false;//auto disable the function
         refreshButtonState();
     }
 
-    public final void setMinusActivated(boolean active){
+    public final void setMinusActivated(boolean active) {
         mMinusActivated = active;
         mMinusButtonAutoActivated = false;//auto disable the function
         refreshButtonState();
@@ -127,95 +125,95 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public final void setNumber(int number) {
-        setNumber(number,FLAG_SET_NUMBER_DIRECT);
+        setNumber(number, FLAG_SET_NUMBER_DIRECT);
     }
 
-    private void setNumber(int aimNumber, int source){
+    private void setNumber(int aimNumber, int source) {
         int preNumber = mNumber;
 
-        if(aimNumber > mMaxNumber){
-            if(mAdjustToBound) {
+        if (aimNumber > mMaxNumber) {
+            if (mAdjustToBound) {
                 mNumber = mMaxNumber;
-            }else {
+            } else {
                 onInternalOutOfBound(FLAG_NUMBER_TOO_LARGE);
                 return;
             }
-        }else if(aimNumber < mMinNumber){
-            if(mAdjustToBound) {
+        } else if (aimNumber < mMinNumber) {
+            if (mAdjustToBound) {
                 mNumber = mMinNumber;
-            }else {
+            } else {
                 onInternalOutOfBound(FLAG_NUMBER_TOO_SMALL);
                 return;
             }
-        }else {
+        } else {
             mNumber = aimNumber;
         }
         //change text
-        if(preNumber != mNumber){
-            mNumberTextView.setText(""+mNumber);
+        if (preNumber != mNumber) {
+            mNumberTextView.setText("" + mNumber);
         }
 
 
         /*
         * notify event
          */
-        if(mNumber == mMaxNumber){
-            onInternalReachMax(preNumber,aimNumber,true);
-        }else if(preNumber == mMaxNumber){
+        if (mNumber == mMaxNumber) {
+            onInternalReachMax(preNumber, aimNumber, true);
+        } else if (preNumber == mMaxNumber) {
             onInternalLeaveMax(true);
         }
 
-        if(mNumber == mMinNumber){
-            onInternalReachMin(preNumber,aimNumber,true);
-        }else if(preNumber == mMaxNumber){
+        if (mNumber == mMinNumber) {
+            onInternalReachMin(preNumber, aimNumber, true);
+        } else if (preNumber == mMaxNumber) {
             onInternalLeaveMin(true);
         }
 
-        switch (source){
+        switch (source) {
             case FLAG_SET_NUMBER_FROM_PLUS:
-                if(mNumberPickerListener != null){
-                    mNumberPickerListener.onPlus(preNumber,mNumber);
+                if (mNumberPickerListener != null) {
+                    mNumberPickerListener.onPlus(preNumber, mNumber);
                 }
                 break;
             case FLAG_SET_NUMBER_FROM_MINUS:
-                if(mNumberPickerListener != null){
-                    mNumberPickerListener.onMinus(preNumber,mNumber);
+                if (mNumberPickerListener != null) {
+                    mNumberPickerListener.onMinus(preNumber, mNumber);
                 }
                 break;
             default:
         }
     }
 
-    public final void resetNumber(){
-        switch (mResetStrategy){
-            case STRATEGY_RESET_NUMBER_TO_MIN :
+    public final void resetNumber() {
+        switch (mResetStrategy) {
+            case STRATEGY_RESET_NUMBER_TO_MIN:
                 mNumber = mMinNumber;
                 break;
-            case STRATEGY_RESET_NUMBER_TO_MAX :
+            case STRATEGY_RESET_NUMBER_TO_MAX:
                 mNumber = mMaxNumber;
                 break;
             default:
         }
         //change text
-        mNumberTextView.setText(""+mNumber);
+        mNumberTextView.setText("" + mNumber);
     }
 
-    public final void plus(){
+    public final void plus() {
         onInternalAttemptPlus();
-        if(plusActivated()) {
+        if (plusActivated()) {
             int aimNumber = mNumber + mStep;
-            if(onInternalPrePlus(aimNumber)) {
-                setNumber(aimNumber,FLAG_SET_NUMBER_FROM_PLUS);
+            if (onInternalPrePlus(aimNumber)) {
+                setNumber(aimNumber, FLAG_SET_NUMBER_FROM_PLUS);
             }
         }
     }
 
-    public final void minus(){
+    public final void minus() {
         onInternalAttemptMinus();
-        if(minusActivated()) {
+        if (minusActivated()) {
             int aimNumber = mNumber - mStep;
-            if(onInternalPreMinus(aimNumber)){
-                setNumber(aimNumber,FLAG_SET_NUMBER_FROM_MINUS);
+            if (onInternalPreMinus(aimNumber)) {
+                setNumber(aimNumber, FLAG_SET_NUMBER_FROM_MINUS);
             }
         }
     }
@@ -225,11 +223,11 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public final void setMinNumber(int minNumber) {
-        if(minNumber > mMaxNumber){
+        if (minNumber > mMaxNumber) {
             throw new RuntimeException("min number is too large");
         }
         mMinNumber = minNumber;
-        if(mNumber < mMinNumber){
+        if (mNumber < mMinNumber) {
             resetNumber();
         }
     }
@@ -239,106 +237,103 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public final void setMaxNumber(int maxNumber) {
-        if(maxNumber < mMinNumber){
+        if (maxNumber < mMinNumber) {
             throw new RuntimeException("max number is too small");
         }
         mMaxNumber = maxNumber;
-        if(mNumber > mMaxNumber){
+        if (mNumber > mMaxNumber) {
             resetNumber();
         }
     }
 
-    public final void setBounds(int minNumber, int maxNumber){
-        if(minNumber > maxNumber){
+    public final void setBounds(int minNumber, int maxNumber) {
+        if (minNumber > maxNumber) {
             throw new RuntimeException("min number should <= max number");
         }
 
         mMinNumber = minNumber;
         mMaxNumber = maxNumber;
-        if(mNumber < mMinNumber || mNumber > mMaxNumber){
+        if (mNumber < mMinNumber || mNumber > mMaxNumber) {
             resetNumber();
         }
     }
 
-    private void onInternalOutOfBound(int flag){
+    private void onInternalOutOfBound(int flag) {
         onNumberOutOfBound(flag);
-        if(mErrorListener != null){
+        if (mErrorListener != null) {
             mErrorListener.numberOutOfBound(flag);
         }
     }
 
-    protected void onNumberOutOfBound(int flag){
+    protected void onNumberOutOfBound(int flag) {
         //override to get the notification
     }
 
-    private void onInternalReachMax(int preNumber, int aimNumber, boolean notify){
-        mReachMax = true;
+    private void onInternalReachMax(int preNumber, int aimNumber, boolean notify) {
         refreshButtonState();
-        onReachMax(preNumber,aimNumber);
-        if(mNumberPickerListener != null && notify){
+        onReachMax(preNumber, aimNumber);
+        if (mNumberPickerListener != null && notify) {
             mNumberPickerListener.onReachMax(preNumber, aimNumber);
         }
     }
 
-    protected void onReachMax(int preNumber, int aimNumber){
+    protected void onReachMax(int preNumber, int aimNumber) {
         //override to get the notification
     }
 
-    private void onInternalReachMin(int preNumber, int aimNumber, boolean notify){
-        mReachMin = true;
+    private void onInternalReachMin(int preNumber, int aimNumber, boolean notify) {
         refreshButtonState();
-        onReachMin(preNumber,aimNumber);
-        if(mNumberPickerListener != null && notify){
+        onReachMin(preNumber, aimNumber);
+        if (mNumberPickerListener != null && notify) {
             mNumberPickerListener.onReachMin(preNumber, aimNumber);
         }
     }
 
-    protected void onReachMin(int preNumber, int aimNumber){
+    protected void onReachMin(int preNumber, int aimNumber) {
         //override to get the notification
     }
 
-    private void onInternalLeaveMax(boolean notify){
-        mReachMax = false;
+    private void onInternalLeaveMax(boolean notify) {
         refreshButtonState();
-        if(notify)
+        if (notify)
             onLeaveMax();
     }
 
-    protected void onLeaveMax(){
+    protected void onLeaveMax() {
         //override to get the notification
     }
 
-    private void onInternalLeaveMin(boolean notify){
-        mReachMin = false;
+    private void onInternalLeaveMin(boolean notify) {
         refreshButtonState();
-        if(notify)
+        if (notify)
             onLeaveMin();
     }
 
-    protected void onLeaveMin(){
+    protected void onLeaveMin() {
         //override to get the notification
     }
 
-    private void onInternalAttemptPlus(){
-        if(mPreEventListener != null){
+    private void onInternalAttemptPlus() {
+        if (mPreEventListener != null) {
             mPreEventListener.onAttemptPlus();
         }
     }
 
-    private void onInternalAttemptMinus(){
-        if(mPreEventListener != null){
+    private void onInternalAttemptMinus() {
+        if (mPreEventListener != null) {
             mPreEventListener.onAttemptMinus();
         }
     }
 
     /**
      * notify before just plus
+     *
      * @param aimNumber the number to set
      * @return whether interrupt plus action. true to interrupt, false not to interrupt.
      */
-    private boolean onInternalPrePlus(int aimNumber){
+    private boolean onInternalPrePlus(int aimNumber) {
         boolean interrupt = false;
-        if(mPreEventListener != null){
+        if (mPreEventListener != null) {
             interrupt = mPreEventListener.onPrePlus();
         }
         return interrupt;
@@ -346,43 +341,44 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     /**
      * notify before just minus
+     *
      * @param aimNumber the number to set
      * @return whether interrupt minus action. true to interrupt, false not to interrupt.
      */
-    private boolean onInternalPreMinus(int aimNumber){
+    private boolean onInternalPreMinus(int aimNumber) {
         boolean interrupt = false;
-        if(mPreEventListener != null){
+        if (mPreEventListener != null) {
             interrupt = mPreEventListener.onPreMinus();
         }
         return interrupt;
     }
 
-    public final boolean plusActivated(){
-        if(mPlusButtonAutoActivated){
-            return !mReachMax;
-        }else {
+    public final boolean plusActivated() {
+        if (mPlusButtonAutoActivated) {
+            return mNumber == mMaxNumber;
+        } else {
             return mPlusActivated;
         }
     }
 
-    public final boolean minusActivated(){
-        if(mMinusButtonAutoActivated){
-            return !mReachMin;
-        }else {
+    public final boolean minusActivated() {
+        if (mMinusButtonAutoActivated) {
+            return mNumber == mMinNumber;
+        } else {
             return mMinusActivated;
         }
     }
 
-    private void refreshButtonState(){
-        if(plusActivated()){
+    private void refreshButtonState() {
+        if (plusActivated()) {
             mPlusButton.setActivated(true);
-        }else {
+        } else {
             mPlusButton.setActivated(false);
         }
 
-        if(minusActivated()){
+        if (minusActivated()) {
             mMinusButton.setActivated(true);
-        }else {
+        } else {
             mMinusButton.setActivated(false);
         }
     }
@@ -394,33 +390,85 @@ public class NumberPickerFrameLayout extends FrameLayout {
         mPlusButton = findViewById(mPlusButtonId);
         mMinusButton = findViewById(mMinusButtonId);
 
-        if(null == mNumberTextView){
+        if (null == mNumberTextView) {
             throw new RuntimeException("Can not find textView of number");
         }
 
-        if(null == mPlusButton){
+        if (null == mPlusButton) {
             throw new RuntimeException("Can not find plus button");
         }
 
-        if(null == mMinusButton){
+        if (null == mMinusButton) {
             throw new RuntimeException("Can not find minus button");
         }
 
         initState();
     }
 
-    private void initState(){
-        setBounds(mMinNumber,mMaxNumber);
-        refreshButtonState();
+    private void initState() {
+        setBounds(mMinNumber, mMaxNumber);
         setNumber(mNumber);
+        refreshButtonState();
+    }
+
+    public final void setPlusButtonAutoActivated(boolean plusButtonAutoActivated) {
+        this.mPlusButtonAutoActivated = plusButtonAutoActivated;
+        refreshButtonState();
+    }
+
+    public final void setMinusButtonAutoActivated(boolean minusButtonAutoActivated) {
+        this.mMinusButtonAutoActivated = minusButtonAutoActivated;
+        refreshButtonState();
+    }
+
+    public boolean isAdjustToBound() {
+        return mAdjustToBound;
+    }
+
+    public void setAdjustToBound(boolean adjustToBound) {
+        mAdjustToBound = adjustToBound;
+    }
+
+    public boolean isPlusButtonAutoActivated() {
+        return mPlusButtonAutoActivated;
+    }
+
+    public boolean isMinusButtonAutoActivated() {
+        return mMinusButtonAutoActivated;
+    }
+
+    public NumberPickerListener getNumberPickerListener() {
+        return mNumberPickerListener;
+    }
+
+    public void setNumberPickerListener(NumberPickerListener numberPickerListener) {
+        this.mNumberPickerListener = numberPickerListener;
+    }
+
+    public PreEventListener getPreEventListener() {
+        return mPreEventListener;
+    }
+
+    public void setPreEventListener(PreEventListener preEventListener) {
+        this.mPreEventListener = preEventListener;
+    }
+
+    public ErrorListener getErrorListener() {
+        return mErrorListener;
+    }
+
+    public void setErrorListener(ErrorListener errorListener) {
+        this.mErrorListener = errorListener;
     }
 
     public interface NumberPickerListener {
         void onPlus(int preNumber, int currentNumber);
+
         void onMinus(int preNumber, int currentNumber);
 
         /**
          * number reach max
+         *
          * @param preNumber number before
          * @param aimNumber aim number was to set, may be greater than max number
          */
@@ -428,6 +476,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
         /**
          * number reach min
+         *
          * @param preNumber number before
          * @param aimNumber aim number was to set, may be less than min number
          */
@@ -436,8 +485,11 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public interface PreEventListener {
         void onAttemptPlus();
+
         void onAttemptMinus();
+
         boolean onPrePlus();
+
         boolean onPreMinus();
 //        boolean onPreSetNumber(int aimNumber);
     }
