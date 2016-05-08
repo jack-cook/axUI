@@ -20,18 +20,23 @@ public class NumberPickerFrameLayout extends FrameLayout {
     public static final int STRATEGY_RESET_NUMBER_TO_MIN = -1;
     public static final int STRATEGY_RESET_NUMBER_TO_MAX = 1;
 
-    private final int DEFAULT_MIN_NUMBER = 0;// TODO: 16/5/8 init
-    private final int DEFAULT_MAX_NUMBER = Integer.MAX_VALUE;// TODO: 16/5/8 init
-    private final int DEFAULT_NUMBER = DEFAULT_MIN_NUMBER;// TODO: 16/5/8 init
+    private final int DEFAULT_MIN_NUMBER = 0;
+    private final int DEFAULT_MAX_NUMBER = Integer.MAX_VALUE;
+    private final int DEFAULT_NUMBER = DEFAULT_MIN_NUMBER;
 
-    private int mNumber;
-    private int mMinNumber;
-    private int mMaxNumber;
+    private int mNumber;// TODO: 16/5/8 init
+    private int mMinNumber;// TODO: 16/5/8 init
+    private int mMaxNumber;// TODO: 16/5/8 init
 
     private boolean mPlusActivated = true;
     private boolean mMinusActivated = true;
+    private boolean mReachMax = false;
+    private boolean mReachMin = false;
 
     private boolean mAdjustToBound = false;// TODO: 16/5/8 init
+
+    private boolean mPlusButtonAutoActivated = true;// TODO: 16/5/8 init
+    private boolean mMinusButtonAutoActivated = true;// TODO: 16/5/8 init
 
     private int mResetStrategy = STRATEGY_RESET_NUMBER_TO_MIN;// TODO: 16/5/8 init
 
@@ -78,6 +83,20 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if(mNumberTextViewId == mPlusButtonId || mNumberTextViewId == mMinusButtonId || mPlusButtonId == mMinusButtonId){
             throw new RuntimeException("Ids of parts of number picker should not be same");
         }
+
+
+    }
+
+    public final void setPlusActivated(boolean active){
+        mPlusActivated = active;
+        mMinusButtonAutoActivated = false;//auto disable the function
+        refreshButtonState();
+    }
+
+    public final void setMinusActivated(boolean active){
+        mMinusActivated = active;
+        mMinusButtonAutoActivated = false;//auto disable the function
+        refreshButtonState();
     }
 
     public int getStep() {
@@ -151,7 +170,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public final void plus(){
         onInternalAttemptPlus();
-        if(mPlusActivated) {
+        if(plusActivated()) {
             int aimNumber = mNumber + mStep;
             if(onInternalPrePlus(aimNumber)) {
                 setNumber(aimNumber);
@@ -163,7 +182,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public final void minus(){
         onInternalAttemptMinus();
-        if(mMinusActivated) {
+        if(minusActivated()) {
             int aimNumber = mNumber - mStep;
             if(onInternalPreMinus(aimNumber)){
                 setNumber(aimNumber);
@@ -214,39 +233,130 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     private void onInternalOutOfBound(int flag){
-        // TODO: 16/5/8
+        onNumberOutOfBound(flag);
+        if(mErrorListener != null){
+            mErrorListener.numberOutOfBound(flag);
+        }
+    }
+
+    protected void onNumberOutOfBound(int flag){
+        //override to get the notification
     }
 
     private void onInternalReachMax(int preNumber, int aimNumber, boolean notify){
+        mReachMax = true;
+        refreshButtonState();
+        onReachMax(preNumber,aimNumber);
+        if(mNumberPickerListener != null && notify){
+            mNumberPickerListener.onReachMax(preNumber, aimNumber);
+        }
+    }
 
+    protected void onReachMax(int preNumber, int aimNumber){
+        //override to get the notification
     }
 
     private void onInternalReachMin(int preNumber, int aimNumber, boolean notify){
+        mReachMin = true;
+        refreshButtonState();
+        onReachMin(preNumber,aimNumber);
+        if(mNumberPickerListener != null && notify){
+            mNumberPickerListener.onReachMin(preNumber, aimNumber);
+        }
+    }
 
+    protected void onReachMin(int preNumber, int aimNumber){
+        //override to get the notification
     }
 
     private void onInternalLeaveMax(boolean notify){
+        mReachMax = false;
+        refreshButtonState();
+        if(notify)
+            onLeaveMax();
+    }
 
+    protected void onLeaveMax(){
+        //override to get the notification
     }
 
     private void onInternalLeaveMin(boolean notify){
+        mReachMin = false;
+        refreshButtonState();
+        if(notify)
+            onLeaveMin();
+    }
 
+    protected void onLeaveMin(){
+        //override to get the notification
     }
 
     private void onInternalAttemptPlus(){
-        // TODO: 16/5/8
+        if(mPreEventListener != null){
+            mPreEventListener.onAttemptPlus();
+        }
     }
 
     private void onInternalAttemptMinus(){
-        // TODO: 16/5/8
+        if(mPreEventListener != null){
+            mPreEventListener.onAttemptMinus();
+        }
     }
 
+    /**
+     * notify before just plus
+     * @param aimNumber the number to set
+     * @return whether interrupt plus action. true to interrupt, false not to interrupt.
+     */
     private boolean onInternalPrePlus(int aimNumber){
-        return false;// TODO: 16/5/8
+        boolean interrupt = false;
+        if(mPreEventListener != null){
+            interrupt = mPreEventListener.onPrePlus();
+        }
+        return interrupt;
     }
 
+    /**
+     * notify before just minus
+     * @param aimNumber the number to set
+     * @return whether interrupt minus action. true to interrupt, false not to interrupt.
+     */
     private boolean onInternalPreMinus(int aimNumber){
-        return false;// TODO: 16/5/8
+        boolean interrupt = false;
+        if(mPreEventListener != null){
+            interrupt = mPreEventListener.onPreMinus();
+        }
+        return interrupt;
+    }
+
+    public final boolean plusActivated(){
+        if(mPlusButtonAutoActivated){
+            return !mReachMax;
+        }else {
+            return mPlusActivated;
+        }
+    }
+
+    public final boolean minusActivated(){
+        if(mMinusButtonAutoActivated){
+            return !mReachMin;
+        }else {
+            return mMinusActivated;
+        }
+    }
+
+    private void refreshButtonState(){
+        if(plusActivated()){
+            mPlusButton.setActivated(true);
+        }else {
+            mPlusButton.setActivated(false);
+        }
+
+        if(minusActivated()){
+            mMinusButton.setActivated(true);
+        }else {
+            mMinusButton.setActivated(false);
+        }
     }
 
     @Override
