@@ -20,6 +20,10 @@ public class NumberPickerFrameLayout extends FrameLayout {
     public static final int STRATEGY_RESET_NUMBER_TO_MIN = -1;
     public static final int STRATEGY_RESET_NUMBER_TO_MAX = 1;
 
+    private static final int FLAG_SET_NUMBER_FROM_PLUS = 1;
+    private static final int FLAG_SET_NUMBER_FROM_MINUS = 2;
+    private static final int FLAG_SET_NUMBER_DIRECT = 3;//直接调用
+
     private final int DEFAULT_MIN_NUMBER = 0;
     private final int DEFAULT_MAX_NUMBER = Integer.MAX_VALUE;
     private final int DEFAULT_NUMBER = DEFAULT_MIN_NUMBER;
@@ -112,6 +116,10 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public final void setNumber(int number) {
+        setNumber(number,FLAG_SET_NUMBER_DIRECT);
+    }
+
+    private void setNumber(int number, int source){
         int preNumber = mNumber;
         int aimNumber = number;
 
@@ -152,6 +160,20 @@ public class NumberPickerFrameLayout extends FrameLayout {
         }else if(preNumber == mMaxNumber){
             onInternalLeaveMin(true);
         }
+
+        switch (source){
+            case FLAG_SET_NUMBER_FROM_PLUS:
+                if(mNumberPickerListener != null){
+                    mNumberPickerListener.onPlus(preNumber,mNumber);
+                }
+                break;
+            case FLAG_SET_NUMBER_FROM_MINUS:
+                if(mNumberPickerListener != null){
+                    mNumberPickerListener.onMinus(preNumber,mNumber);
+                }
+                break;
+            default:
+        }
     }
 
     public final void resetNumber(){
@@ -173,7 +195,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if(plusActivated()) {
             int aimNumber = mNumber + mStep;
             if(onInternalPrePlus(aimNumber)) {
-                setNumber(aimNumber);
+                setNumber(aimNumber,FLAG_SET_NUMBER_FROM_PLUS);
             }
         }else {
 
@@ -185,7 +207,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if(minusActivated()) {
             int aimNumber = mNumber - mStep;
             if(onInternalPreMinus(aimNumber)){
-                setNumber(aimNumber);
+                setNumber(aimNumber,FLAG_SET_NUMBER_FROM_MINUS);
             }
         }else {
 
