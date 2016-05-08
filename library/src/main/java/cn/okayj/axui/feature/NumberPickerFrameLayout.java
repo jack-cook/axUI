@@ -94,38 +94,44 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public final void setNumber(int number) {
         int preNumber = mNumber;
-        if(number > mMaxNumber){
-            if(mAdjustToBound){
+        int aimNumber = number;
+
+        if(aimNumber > mMaxNumber){
+            if(mAdjustToBound) {
                 mNumber = mMaxNumber;
-                //// TODO: 16/5/8 判断方式需改变,根据值的变化来判断
-                onInternalReachMax(preNumber,number, true);
-                return;
             }else {
                 onInternalOutOfBound(FLAG_NUMBER_TOO_LARGE);
                 return;
             }
-        }else if(number < mMinNumber){
-            if(mAdjustToBound){
+        }else if(aimNumber < mMinNumber){
+            if(mAdjustToBound) {
                 mNumber = mMinNumber;
-                onInternalReachMin(preNumber,number, true);
-                return;
             }else {
                 onInternalOutOfBound(FLAG_NUMBER_TOO_SMALL);
                 return;
             }
-        }else if(number == mMaxNumber || number == mMinNumber){
-            mNumber = number;
-
-            if(number == mMaxNumber){
-                onInternalReachMax(preNumber,number,true);
-            }
-            if(number == mMinNumber){
-                onInternalReachMin(preNumber,number,true);
-            }
-
-            return;
         }else {
-            mNumber = number;
+            mNumber = aimNumber;
+        }
+        //change text
+        if(preNumber != mNumber){
+            mNumberTextView.setText(""+mNumber);
+        }
+
+
+        /*
+        * notify event
+         */
+        if(mNumber == mMaxNumber){
+            onInternalReachMax(preNumber,aimNumber,true);
+        }else if(preNumber == mMaxNumber){
+            onInternalLeaveMax(true);
+        }
+
+        if(mNumber == mMinNumber){
+            onInternalReachMin(preNumber,aimNumber,true);
+        }else if(preNumber == mMaxNumber){
+            onInternalLeaveMin(true);
         }
     }
 
@@ -139,6 +145,8 @@ public class NumberPickerFrameLayout extends FrameLayout {
                 break;
             default:
         }
+        //change text
+        mNumberTextView.setText(""+mNumber);
     }
 
     public final void plus(){
@@ -214,6 +222,14 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     private void onInternalReachMin(int preNumber, int aimNumber, boolean notify){
+
+    }
+
+    private void onInternalLeaveMax(boolean notify){
+
+    }
+
+    private void onInternalLeaveMin(boolean notify){
 
     }
 
