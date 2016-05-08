@@ -5,7 +5,7 @@
         <enum name="height" value="1" />
         <enum name="width" value="2"/>
     </attr>
-    
+
     <attr name="maxHeight" format="dimension"/>
 
     <declare-styleable name="RatioFrameLayout">
@@ -20,5 +20,11 @@
 
     <declare-styleable name="SelfAdaptionScrollView">
         <attr name="maxHeight"/>
+    </declare-styleable>
+
+    <declare-styleable name="NumberPickerFrameLayout">
+        <attr name="pickerTextViewId" format="integer" />
+        <attr name="pickerPlusButtonId" format="integer" />
+        <attr name="pickerMinusButtonId" format="integer" />
     </declare-styleable>
 </resources>
