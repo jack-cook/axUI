@@ -437,6 +437,18 @@ public class NumberPickerFrameLayout extends FrameLayout {
         return mMinusButtonAutoActivated;
     }
 
+    protected TextView getNumberTextView() {
+        return mNumberTextView;
+    }
+
+    protected View getPlusButton() {
+        return mPlusButton;
+    }
+
+    protected View getMinusButton() {
+        return mMinusButton;
+    }
+
     public NumberPickerListener getNumberPickerListener() {
         return mNumberPickerListener;
     }
