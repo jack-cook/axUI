@@ -199,22 +199,24 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public final void plus() {
-        onInternalAttemptPlus();
-        if (plusActivated()) {
-            int aimNumber = mNumber + mStep;
-            if (onInternalPrePlus(aimNumber)) {
-                setNumber(aimNumber, FLAG_SET_NUMBER_FROM_PLUS);
-            }
+        performPlus();
+    }
+
+    private void performPlus() {
+        int aimNumber = mNumber + mStep;
+        if (onInternalPrePlus(aimNumber)) {
+            setNumber(aimNumber, FLAG_SET_NUMBER_FROM_PLUS);
         }
     }
 
     public final void minus() {
-        onInternalAttemptMinus();
-        if (minusActivated()) {
-            int aimNumber = mNumber - mStep;
-            if (onInternalPreMinus(aimNumber)) {
-                setNumber(aimNumber, FLAG_SET_NUMBER_FROM_MINUS);
-            }
+        performMinus();
+    }
+
+    private void performMinus() {
+        int aimNumber = mNumber - mStep;
+        if (onInternalPreMinus(aimNumber)) {
+            setNumber(aimNumber, FLAG_SET_NUMBER_FROM_MINUS);
         }
     }
 
@@ -313,15 +315,21 @@ public class NumberPickerFrameLayout extends FrameLayout {
         //override to get the notification
     }
 
-    private void onInternalAttemptPlus() {
+    private void onPlusClick(View view) {
         if (mPreEventListener != null) {
-            mPreEventListener.onAttemptPlus();
+            mPreEventListener.onPlusClick(isPlusActivated());
+        }
+        if (isPlusActivated()) {
+            performPlus();
         }
     }
 
-    private void onInternalAttemptMinus() {
+    private void onMinusClick(View view) {
         if (mPreEventListener != null) {
-            mPreEventListener.onAttemptMinus();
+            mPreEventListener.onMinusClick(isPlusActivated());
+        }
+        if (isPlusActivated()) {
+            performMinus();
         }
     }
 
@@ -334,7 +342,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
     private boolean onInternalPrePlus(int aimNumber) {
         boolean interrupt = false;
         if (mPreEventListener != null) {
-            interrupt = mPreEventListener.onPrePlus();
+            interrupt = mPreEventListener.onPrePlus(mNumber, aimNumber);
         }
         return interrupt;
     }
@@ -348,12 +356,12 @@ public class NumberPickerFrameLayout extends FrameLayout {
     private boolean onInternalPreMinus(int aimNumber) {
         boolean interrupt = false;
         if (mPreEventListener != null) {
-            interrupt = mPreEventListener.onPreMinus();
+            interrupt = mPreEventListener.onPreMinus(mNumber, aimNumber);
         }
         return interrupt;
     }
 
-    public final boolean plusActivated() {
+    public final boolean isPlusActivated() {
         if (mPlusButtonAutoActivated) {
             return mNumber == mMaxNumber;
         } else {
@@ -361,7 +369,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
         }
     }
 
-    public final boolean minusActivated() {
+    public final boolean isMinusActivated() {
         if (mMinusButtonAutoActivated) {
             return mNumber == mMinNumber;
         } else {
@@ -370,13 +378,13 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     private void refreshButtonState() {
-        if (plusActivated()) {
+        if (isPlusActivated()) {
             mPlusButton.setActivated(true);
         } else {
             mPlusButton.setActivated(false);
         }
 
-        if (minusActivated()) {
+        if (isMinusActivated()) {
             mMinusButton.setActivated(true);
         } else {
             mMinusButton.setActivated(false);
@@ -401,6 +409,20 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if (null == mMinusButton) {
             throw new RuntimeException("Can not find minus button");
         }
+
+        mPlusButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onPlusClick(v);
+            }
+        });
+
+        mMinusButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onMinusClick(v);
+            }
+        });
 
         initState();
     }
@@ -474,8 +496,20 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public interface NumberPickerListener {
+        /**
+         * notified when plus performed
+         *
+         * @param preNumber     number before plus
+         * @param currentNumber number after plus
+         */
         void onPlus(int preNumber, int currentNumber);
 
+        /**
+         * notified when minus performed
+         *
+         * @param preNumber     number before minus
+         * @param currentNumber number after minus
+         */
         void onMinus(int preNumber, int currentNumber);
 
         /**
@@ -496,13 +530,43 @@ public class NumberPickerFrameLayout extends FrameLayout {
     }
 
     public interface PreEventListener {
-        void onAttemptPlus();
+        /**
+         * notified when user click plus button, no matter whether the button is activated.
+         * plus will not performed if plus button is not activated.
+         *
+         * @param plusActivated whether plus button is activated
+         * @see NumberPickerFrameLayout#setPlusActivated(boolean)
+         * @see NumberPickerFrameLayout#setPlusButtonAutoActivated(boolean)
+         */
+        void onPlusClick(boolean plusActivated);
 
-        void onAttemptMinus();
+        /**
+         * notified when user click minus button, no matter whether the button is activated.
+         * minus will not performed if minus button is not activated.
+         *
+         * @param minusActivated
+         * @see NumberPickerFrameLayout#setMinusActivated(boolean)
+         * @see NumberPickerFrameLayout#setMinusButtonAutoActivated(boolean)
+         */
+        void onMinusClick(boolean minusActivated);
 
-        boolean onPrePlus();
+        /**
+         * notified before plus is performed. if aborted, plus will not performed.
+         *
+         * @param currentNumber current number
+         * @param aimNumber     number attempt to set
+         * @return whether abort, true to abort, false not to.
+         */
+        boolean onPrePlus(int currentNumber, int aimNumber);
 
-        boolean onPreMinus();
+        /**
+         * notified before minus is performed. If aborted, minus will not performed.
+         *
+         * @param currentNumber current number
+         * @param aimMumber     number attempt to set
+         * @return whether abort, true to abort, false not to.
+         */
+        boolean onPreMinus(int currentNumber, int aimMumber);
 //        boolean onPreSetNumber(int aimNumber);
     }
 
