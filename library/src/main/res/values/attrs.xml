@@ -29,9 +29,9 @@
     </declare-styleable>
 
     <declare-styleable name="NumberPickerFrameLayout">
-        <attr name="pickerTextViewId" format="integer" />
-        <attr name="pickerPlusButtonId" format="integer" />
-        <attr name="pickerMinusButtonId" format="integer" />
+        <attr name="pickerTextViewId" format="reference" />
+        <attr name="pickerPlusButtonId" format="reference" />
+        <attr name="pickerMinusButtonId" format="reference" />
         <attr name="pickerPlusAutoActivated" format="boolean"/>
         <attr name="pickerMinusAutoActivated" format="boolean"/>
         <attr name="number"/>

@@ -74,9 +74,9 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.NumberPickerFrameLayout);
-        mNumberTextViewId = a.getInteger(R.styleable.NumberPickerFrameLayout_pickerTextViewId, 0);
-        mPlusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerPlusButtonId, 0);
-        mMinusButtonId = a.getInt(R.styleable.NumberPickerFrameLayout_pickerMinusButtonId, 0);
+        mNumberTextViewId = a.getResourceId(R.styleable.NumberPickerFrameLayout_pickerTextViewId, 0);
+        mPlusButtonId = a.getResourceId(R.styleable.NumberPickerFrameLayout_pickerPlusButtonId, 0);
+        mMinusButtonId = a.getResourceId(R.styleable.NumberPickerFrameLayout_pickerMinusButtonId, 0);
 
         if (0 == mNumberTextViewId || 0 == mPlusButtonId || 0 == mMinusButtonId) {
             throw new RuntimeException("Ids of parts of number picker are not specified");
