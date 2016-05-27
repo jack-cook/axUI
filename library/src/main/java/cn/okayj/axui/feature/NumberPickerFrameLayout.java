@@ -165,7 +165,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
         if (mNumber == mMinNumber) {
             onInternalReachMin(preNumber, aimNumber, true);
-        } else if (preNumber == mMaxNumber) {
+        } else if (preNumber == mMinNumber) {
             onInternalLeaveMin(true);
         }
 
@@ -204,7 +204,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     private void performPlus() {
         int aimNumber = mNumber + mStep;
-        if (onInternalPrePlus(aimNumber)) {
+        if (!onInternalPrePlus(aimNumber)) {
             setNumber(aimNumber, FLAG_SET_NUMBER_FROM_PLUS);
         }
     }
@@ -215,7 +215,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     private void performMinus() {
         int aimNumber = mNumber - mStep;
-        if (onInternalPreMinus(aimNumber)) {
+        if (!onInternalPreMinus(aimNumber)) {
             setNumber(aimNumber, FLAG_SET_NUMBER_FROM_MINUS);
         }
     }
@@ -363,7 +363,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public final boolean isPlusActivated() {
         if (mPlusButtonAutoActivated) {
-            return mNumber == mMaxNumber;
+            return mNumber < mMaxNumber;
         } else {
             return mPlusActivated;
         }
@@ -371,7 +371,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     public final boolean isMinusActivated() {
         if (mMinusButtonAutoActivated) {
-            return mNumber == mMinNumber;
+            return mNumber > mMinNumber;
         } else {
             return mMinusActivated;
         }
