@@ -326,9 +326,9 @@ public class NumberPickerFrameLayout extends FrameLayout {
 
     private void onMinusClick(View view) {
         if (mPreEventListener != null) {
-            mPreEventListener.onMinusClick(isPlusActivated());
+            mPreEventListener.onMinusClick(isMinusActivated());
         }
-        if (isPlusActivated()) {
+        if (isMinusActivated()) {
             performMinus();
         }
     }
