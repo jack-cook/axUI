@@ -258,6 +258,7 @@ public class NumberPickerFrameLayout extends FrameLayout {
         if (mNumber < mMinNumber || mNumber > mMaxNumber) {
             resetNumber();
         }
+        refreshButtonState();
     }
 
     private void onInternalOutOfBound(int flag) {
