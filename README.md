@@ -1,1 +1,1 @@
-This is a android ui library project.
+This is an android ui library project.
