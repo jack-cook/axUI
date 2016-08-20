@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/axUI.iml" filepath="$PROJECT_DIR$/axUI.iml" />
       <module fileurl="file://$PROJECT_DIR$/examples/examples.iml" filepath="$PROJECT_DIR$/examples/examples.iml" />
       <module fileurl="file://$PROJECT_DIR$/library/library.iml" filepath="$PROJECT_DIR$/library/library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/support_recyelerview/support_recyelerview.iml" filepath="$PROJECT_DIR$/support_recyelerview/support_recyelerview.iml" />
     </modules>
   </component>
 </project>

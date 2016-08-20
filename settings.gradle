@@ -1,1 +1,1 @@
-include ':app', ':library', ':examples'
+include ':app', ':library', ':examples', ':support_recyelerview'
