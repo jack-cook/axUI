@@ -23,21 +23,30 @@ import cn.okayj.axui.R;
 /**
  * Created by Jack on 16/4/20.
  */
-public abstract class NormalViewHolder<T> {
+public abstract class ViewHolder<T> {
+    private static final String CLASS_NAME = ViewHolder.class.getName();
     private static final int ID_VIEW_TAG_HOLDER = R.id.view_tag_holder;
 
     public final View itemView;
 
     private T item;
 
-    public NormalViewHolder(View itemView) {
+    public ViewHolder(View itemView) {
         this.itemView = itemView;
         itemView.setTag(ID_VIEW_TAG_HOLDER,this);
-        onBindView(itemView);
     }
 
-    public static Object getHolder(View itemView){
-        return itemView.getTag(ID_VIEW_TAG_HOLDER);
+    public ViewHolder bindView() {
+        onBindView(itemView);
+        return this;
+    }
+
+    public static <VH> Object getHolder(View itemView){
+        VH viewHolder = (VH) itemView.getTag(ID_VIEW_TAG_HOLDER);
+        if(viewHolder == null){
+            throw new RuntimeException("The view is not yet "+ CLASS_NAME + "supported");
+        }
+        return viewHolder;
     }
 
     public void setItem(T item){
