@@ -116,6 +116,9 @@ public class FlowLayout extends ViewGroup {
         int childCount = getChildCount();
         for(int i = 0; i < childCount; ++i){
             View child = getChildAt(i);
+            if(child.getVisibility() == GONE)
+                continue;
+
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
             if(newBand){
@@ -151,11 +154,17 @@ public class FlowLayout extends ViewGroup {
         
         boolean fixedBandWidth = mBandWidth != BAND_WIDTH_NOT_FIXED;
 
+        final int CONTENT_WIDTH = Math.max(0,widthSize - getContentOccupied(HORIZONTAL));
+        final int CONTENT_HEIGHT = Math.max(0,heightSize - getContentOccupied(VERTICAL));
+
         Band band;
-        int bandWidth = 0;
+        int bandWidth = 0;//带宽,用来计算高度
+        int preBandWidth = bandWidth;
         int bandLength = 0;
         int preBandLength = bandLength;
         int tempBandLength = 0;
+        int maxBandLength = 0;//最长band,用来计算宽度
+        int contentHeight = 0;//用来计算高度
         boolean newBand = true;
         int childCount = getChildCount();
         for(int i = 0; i < childCount - 1; ++i){
@@ -166,75 +175,106 @@ public class FlowLayout extends ViewGroup {
             
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
-            if(widthMode == MeasureSpec.EXACTLY){
-                if(!newBand && widthSize < bandLength + lp.leftMargin + lp.rightMargin){
+            int wMeasureSpec;
+            int hMeasureSpec;
+            boolean reMeasure = false;
+
+            /*
+            *计算高度限制。
+             */
+            if(fixedBandWidth){
+                        /*
+                        用带宽去限制child的高度
+                         */
+
+                if(lp.height == LayoutParams.MATCH_PARENT){
+                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(mBandWidth - lp.topMargin - lp.bottomMargin),MeasureSpec.EXACTLY);
+                }else{
+                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(mBandWidth - lp.topMargin - lp.bottomMargin),MeasureSpec.AT_MOST);
+                }
+            }else {
+                        /*
+                        用父试图的高度限制
+                         */
+                if(heightMode == MeasureSpec.UNSPECIFIED){
+                    hMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
+                }else {
+                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(CONTENT_HEIGHT - lp.topMargin - lp.bottomMargin), heightMode);// TODO: 16/8/27 ok?
+                }
+            }
+
+
+            /*
+            *计算宽度限制并测量,有可能要另起一行
+             */
+            if(widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST){
+                tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
+                if(!newBand && CONTENT_WIDTH < tempBandLength){
                     //因为margin而放不下,需要另起一行。
                     
                     newBand = true;
                     preBandLength = bandLength;
                     bandLength = 0;
+                    tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
                 }
 
-                tempBandLength += lp.leftMargin + lp.rightMargin;
-                int wMeasureSpec;
                 if(lp.width == LayoutParams.MATCH_PARENT){
-                    wMeasureSpec = MeasureSpec.makeMeasureSpec(widthSize - tempBandLength,MeasureSpec.EXACTLY);
+                    wMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(CONTENT_WIDTH - tempBandLength),MeasureSpec.EXACTLY);
                 }else {
-                    wMeasureSpec = MeasureSpec.makeMeasureSpec(widthSize - tempBandLength,MeasureSpec.AT_MOST);
+                    wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
                 }
-                int hMeasureSpec;
-                if(fixedBandWidth){
-                        /*
-                        用带宽去限制child的高度
-                         */
 
-                    if(lp.height == LayoutParams.MATCH_PARENT){
-                        hMeasureSpec = MeasureSpec.makeMeasureSpec(mBandWidth - lp.topMargin - lp.bottomMargin,MeasureSpec.EXACTLY);
-                    }else{
-                        hMeasureSpec = MeasureSpec.makeMeasureSpec(mBandWidth - lp.topMargin - lp.bottomMargin,MeasureSpec.AT_MOST);
-                    }
-                }else {
-                        /*
-                        用父试图的高度限制
-                         */
-
-                    hMeasureSpec = MeasureSpec.makeMeasureSpec(heightSize - lp.topMargin - lp.bottomMargin,heightMode);
-                }
                 child.measure(wMeasureSpec,hMeasureSpec);
-                
-                boolean reMeasure = false;
-                if(!newBand && bandLength + child.getMeasuredWidth() > widthSize){
+
+                if(!newBand && bandLength + child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin > CONTENT_WIDTH){//需要另起一行,重新测量
                     reMeasure = true;
                     newBand = true;
                     preBandLength = bandLength;
                     bandLength = 0;
+                    preBandWidth = bandWidth;
+                    bandWidth = 0;
+                }else {
+                    bandLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
+                    bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
                 }
-                
-                if(reMeasure){
-                    wMeasureSpec = MeasureSpec.makeMeasureSpec(widthSize,MeasureSpec.EXACTLY);
-                    child.measure(wMeasureSpec,hMeasureSpec);
-                }
-            }else if(widthMode == MeasureSpec.UNSPECIFIED){
-                // TODO: 16/8/21  
-            }else {
-                // TODO: 16/8/21  
+
+            }else{// widthMode == MeasureSpec.UNSPECIFIED
+                wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
+                child.measure(wMeasureSpec,hMeasureSpec);
+            }/*else {// AT_MOST
+
+            }*/
+
+
+            if(reMeasure){//另起一行,需要重新测量
+                wMeasureSpec = MeasureSpec.makeMeasureSpec(CONTENT_WIDTH,widthMode);
+                child.measure(wMeasureSpec,hMeasureSpec);
+                bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
             }
-            
-            
+
             if(newBand){
                 bandLength = 0;
                 band = new Band();
                 band.setStartIndex(i);
                 mBands.add(band);
                 newBand = false;
+
+                maxBandLength = Math.max(preBandLength,maxBandLength);
+                contentHeight += preBandWidth;
             }
         }
+
+        //last band
+        maxBandLength = Math.max(bandLength,maxBandLength);
+        contentHeight += bandWidth;
+
+        // TODO: 16/8/29 保存带宽
         
         
         
         /*
         *计算宽高,并计算带宽
-         */
+         *//*
         int contentHeight = 0;
         int contentWidth = 0;
         int start = 0;
@@ -261,9 +301,37 @@ public class FlowLayout extends ViewGroup {
             band.setBandWidth(maxChildHeight);
             contentWidth = Math.max(contentWidth,bandLength);
             contentHeight += maxChildHeight;
-        }
+        }*/
         
         if(widthMode == )// TODO: 16/8/21  
+    }
+
+    private int getContentOccupied(@OrientationMode int orientation){
+        int occupied = 0;
+        if(orientation == HORIZONTAL){
+            occupied += getPaddingLeft() + getPaddingRight();
+            if(mOrientation == HORIZONTAL){
+                int edgeGapCount = 0;
+                // TODO: 16/8/27 count edge gap
+                return occupied += mGapWidth * edgeGapCount;
+            }else {
+                return occupied;
+            }
+        }else {
+            occupied += getPaddingTop() + getPaddingBottom();
+            if(mOrientation == VERTICAL){
+                int edgeGapCount = 0;
+                // TODO: 16/8/27 count edge gap
+                return occupied += mGapWidth * edgeGapCount;
+            }else {
+                return occupied;
+            }
+        }
+
+    }
+
+    private int getChildMeasureSize(int sizeLeft){
+        return Math.max(0,sizeLeft);
     }
 
     @Override
