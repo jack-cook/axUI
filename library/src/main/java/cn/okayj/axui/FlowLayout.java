@@ -65,82 +65,8 @@ public class FlowLayout extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mBands.clear();
-
-
-
-        int width = 0;
-        int height = 0;
-
-        int flowLength = 0;//flow orientation dimension
-        int flowWidth = 0;
-
-
-        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        final int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        final int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
-        final int flowLengthMode;
-        final int flowLengthSize;
-        final int flowWidthMode;
-        final int flowWidthSize;
-
-        if(mOrientation == HORIZONTAL){
-            flowLengthMode = widthMode;
-            flowLengthSize = widthSize;
-            flowWidthMode = heightMode;
-            flowWidthSize = heightSize;
-        }else {
-            flowLengthMode = heightMode;
-            flowLengthSize = heightSize;
-            flowWidthMode = widthMode;
-            flowWidthSize = widthSize;
-        }
-
-        switch (flowLengthMode){
-            case MeasureSpec.EXACTLY:
-                flowLength = flowLengthSize;
-                break;
-        }
-
-        switch (flowWidthMode){
-            case MeasureSpec.EXACTLY:
-                flowWidth = flowLengthSize;
-                break;
-        }
-
-        Band band;
-        int bandWidth = 0;
-        int bandLength = 0;
-        boolean newBand = true;
-        int childCount = getChildCount();
-        for(int i = 0; i < childCount; ++i){
-            View child = getChildAt(i);
-            if(child.getVisibility() == GONE)
-                continue;
-
-            LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
-            if(newBand){
-                bandLength = 0;
-                band = new Band();
-                band.setStartIndex(0);
-                if(mBandWidth != BAND_WIDTH_NOT_FIXED)
-                    band.setBandWidth(mBandWidth);
-                mBands.add(band);
-                newBand = false;
-            }
-            band = mBands.get(mBands.size() - 1);
-
-            if(flowLengthMode == MeasureSpec.EXACTLY){
-                int preBandLength = bandLength;
-                bandLength +=
-            }
-        }
-
-
-
-        // TODO: 16/8/20
+        measureHorizontal(widthMeasureSpec,heightMeasureSpec);
+        // TODO: 16/8/30 measureVertical
     }
 
     void measureHorizontal(int widthMeasureSpec, int heightMeasureSpec) {
@@ -159,7 +85,7 @@ public class FlowLayout extends ViewGroup {
         final int CONTENT_WIDTH = Math.max(0,widthSize - CONTENT_OCCUPIED_HORIZONTAL);
         final int CONTENT_HEIGHT = Math.max(0,heightSize - CONTENT_OCCUPIED_VERTICAL);
 
-        Band band;
+        Band band = null;
         int bandWidth = 0;//带宽,用来计算高度
         int preBandWidth = bandWidth;
         int bandLength = 0;
