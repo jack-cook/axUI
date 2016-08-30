@@ -56,4 +56,24 @@
         <attr name="step"/>
         <attr name="adjust_to_bound"/>
     </declare-styleable>
+
+    <declare-styleable name="FlowLayout">
+        <attr name="gap" format="reference" />
+        <attr name="showGaps" format="integer">
+            <flag name="none" value="0" />
+            <flag name="beginning" value="1" />
+            <flag name="middle" value="2" />
+            <flag name="end" value="4" />
+        </attr>
+        <attr name="bandWidth" format="dimension" />
+        
+        <attr name="android:divider"/>
+        <attr name="android:showDividers"/>
+        <attr name="android:gravity"/>
+    </declare-styleable>
+
+    <declare-styleable name="FlowLayout_Layout">
+        <attr name="android:layout_gravity"/>
+        <attr name="carriageReturn" format="boolean"/>
+    </declare-styleable>
 </resources>

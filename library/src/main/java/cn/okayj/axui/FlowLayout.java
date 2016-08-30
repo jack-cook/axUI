@@ -2,6 +2,7 @@ package cn.okayj.axui;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.IntDef;
@@ -60,8 +61,7 @@ public class FlowLayout extends ViewGroup {
     public static final int SHOW_GAP_END = 4;
 
     private int mOrientation = HORIZONTAL;
-    private int mGravity = Gravity.START | Gravity.TOP;
-    private int mDefaultChildGravity = Gravity.CENTER;
+    private int mGravity = Gravity.LEFT | Gravity.CENTER;
 
     private int mBandWidth = BAND_WIDTH_NOT_FIXED;
 
@@ -98,6 +98,17 @@ public class FlowLayout extends ViewGroup {
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes){
+        TypedArray a = context.obtainStyledAttributes(attrs,R.styleable.FlowLayout,defStyleAttr,defStyleRes);
+
+        mGap = a.getDrawable(R.styleable.FlowLayout_gap);
+        mShowGaps = a.getInt(R.styleable.FlowLayout_showGaps,SHOW_GAP_NONE);
+        mDivider = a.getDrawable(R.styleable.FlowLayout_android_divider);
+        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
+        mBandWidth = a.getInt(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
+        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
+
+        setGapDrawable(mGap);
+        setDividerDrawable(mDivider);
         // TODO: 16/8/20
     }
 
@@ -317,7 +328,7 @@ public class FlowLayout extends ViewGroup {
     private int getChildGravity(View child){
         int childGravity = ((LayoutParams)child.getLayoutParams()).mGravity;
         if(childGravity < 0)
-            childGravity = mDefaultChildGravity;
+            childGravity = mGravity;
         return childGravity;
     }
 
@@ -383,11 +394,11 @@ public class FlowLayout extends ViewGroup {
 
                 int childGravity = getChildGravity(child);
                 switch (childGravity & Gravity.VERTICAL_GRAVITY_MASK){
-                    case Gravity.TOP :
-                        childTop = bandTop + lp.topMargin;
-                        break;
                     case Gravity.CENTER_VERTICAL:
                         childTop = bandTop + (bandWidth - childHeight) / 2 ;
+                        break;
+                    case Gravity.TOP :
+                        childTop = bandTop + lp.topMargin;
                         break;
                     default:
                         childTop = bandTop + bandWidth - childHeight - lp.bottomMargin;
@@ -573,13 +584,16 @@ public class FlowLayout extends ViewGroup {
     }
 
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {
-        public boolean mCR = false;//是否另起一行
+        public boolean mCarriageReturn = false;//是否另起一行
 
         public int mGravity = -1;
 
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
-            //// TODO: 16/8/20
+
+            TypedArray a = c.obtainStyledAttributes(attrs,R.styleable.FlowLayout_Layout);
+            mGravity = a.getInt(R.styleable.FlowLayout_Layout_android_layout_gravity,mGravity);
+            mCarriageReturn = a.getBoolean(R.styleable.FlowLayout_Layout_carriageReturn,mCarriageReturn);
         }
 
         public LayoutParams(int width, int height) {
@@ -597,7 +611,8 @@ public class FlowLayout extends ViewGroup {
         public LayoutParams(LayoutParams source){
             super(source);
 
-            //// TODO: 16/8/20
+            mCarriageReturn = source.mCarriageReturn;
+            mGravity = source.mGravity;
         }
     }
 
