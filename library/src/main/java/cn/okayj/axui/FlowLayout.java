@@ -154,8 +154,10 @@ public class FlowLayout extends ViewGroup {
         
         boolean fixedBandWidth = mBandWidth != BAND_WIDTH_NOT_FIXED;
 
-        final int CONTENT_WIDTH = Math.max(0,widthSize - getContentOccupied(HORIZONTAL));
-        final int CONTENT_HEIGHT = Math.max(0,heightSize - getContentOccupied(VERTICAL));
+        final int CONTENT_OCCUPIED_HORIZONTAL = getContentOccupied(HORIZONTAL);
+        final int CONTENT_OCCUPIED_VERTICAL = getContentOccupied(VERTICAL);
+        final int CONTENT_WIDTH = Math.max(0,widthSize - CONTENT_OCCUPIED_HORIZONTAL);
+        final int CONTENT_HEIGHT = Math.max(0,heightSize - CONTENT_OCCUPIED_VERTICAL);
 
         Band band;
         int bandWidth = 0;//带宽,用来计算高度
@@ -253,6 +255,10 @@ public class FlowLayout extends ViewGroup {
             }
 
             if(newBand){
+                if(band != null){//set last band max width
+                    band.setBandWidth(preBandWidth);
+                }
+
                 bandLength = 0;
                 band = new Band();
                 band.setStartIndex(i);
@@ -265,13 +271,23 @@ public class FlowLayout extends ViewGroup {
         }
 
         //last band
+        if(band != null){
+            band.setBandWidth(bandWidth);
+        }
+
+        int bandCount = mBands.size();
         maxBandLength = Math.max(bandLength,maxBandLength);
         contentHeight += bandWidth;
+        if(bandCount > 0){
+            contentHeight += (bandCount -1) * mDividerWidth;
+        }
+        width = maxBandLength + CONTENT_WIDTH;
+        height = contentHeight + CONTENT_HEIGHT;
+        width = Math.max(width,getSuggestedMinimumWidth());
+        height = Math.max(height,getSuggestedMinimumHeight());
 
-        // TODO: 16/8/29 保存带宽
-        
-        
-        
+        setMeasuredDimension(resolveSize(width,widthMeasureSpec),resolveSize(height,heightMeasureSpec));
+
         /*
         *计算宽高,并计算带宽
          *//*
@@ -303,7 +319,6 @@ public class FlowLayout extends ViewGroup {
             contentHeight += maxChildHeight;
         }*/
         
-        if(widthMode == )// TODO: 16/8/21  
     }
 
     private int getContentOccupied(@OrientationMode int orientation){
@@ -434,15 +449,15 @@ public class FlowLayout extends ViewGroup {
     }
 
     private static class Band {
-        private int mBandWidth;
+        private int mBandContentMaxWidth;
         private int mStartIndex;//start child index
 
         public int getBandWidth() {
-            return mBandWidth;
+            return mBandContentMaxWidth;
         }
 
-        public void setBandWidth(int bandWidth) {
-            this.mBandWidth = bandWidth;
+        public void setBandWidth(int bandContentMaxWidth) {
+            this.mBandContentMaxWidth = bandContentMaxWidth;
         }
 
         public int getStartIndex() {
