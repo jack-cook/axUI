@@ -153,6 +153,8 @@ public class FlowLayout extends ViewGroup {
             
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
+            if(lp.mCarriageReturn)
+                newBand = true;
             int wMeasureSpec;
             int hMeasureSpec;
             boolean reMeasure = false;
