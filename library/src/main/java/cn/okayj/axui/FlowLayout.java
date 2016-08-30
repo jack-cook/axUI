@@ -2,6 +2,7 @@ package cn.okayj.axui;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
@@ -24,13 +25,51 @@ public class FlowLayout extends ViewGroup {
     
     private static final int BAND_WIDTH_NOT_FIXED = 0;
 
+    /**
+     * Don't show any dividers.
+     */
+    public static final int SHOW_DIVIDER_NONE = 0;
+    /**
+     * Show a divider at the beginning of the group.
+     */
+    public static final int SHOW_DIVIDER_BEGINNING = 1;
+    /**
+     * Show dividers between each item in the group.
+     */
+    public static final int SHOW_DIVIDER_MIDDLE = 2;
+    /**
+     * Show a divider at the end of the group.
+     */
+    public static final int SHOW_DIVIDER_END = 4;
+
+    /**
+     * Don't show any gaps.
+     */
+    public static final int SHOW_GAP_NONE = 0;
+    /**
+     * Show a gap at the beginning of the group.
+     */
+    public static final int SHOW_GAP_BEGINNING = 1;
+    /**
+     * Show gaps between each item in the group.
+     */
+    public static final int SHOW_GAP_MIDDLE = 2;
+    /**
+     * Show a gap at the end of the group.
+     */
+    public static final int SHOW_GAP_END = 4;
+
     private int mOrientation = HORIZONTAL;
     private int mGravity = Gravity.START | Gravity.TOP;
+    private int mDefaultChildGravity = Gravity.CENTER;
 
     private int mBandWidth = BAND_WIDTH_NOT_FIXED;
 
     private Drawable mDivider;
     private Drawable mGap;//space between views
+
+    private int mShowDividers = SHOW_DIVIDER_NONE;
+    private int mShowGaps = SHOW_GAP_NONE;
 
     private int mDividerWidth;
     private int mDividerHeight;
@@ -93,7 +132,7 @@ public class FlowLayout extends ViewGroup {
         int tempBandLength = 0;
         int maxBandLength = 0;//最长band,用来计算宽度
         int contentHeight = 0;//用来计算高度
-        boolean newBand = true;
+        boolean newBand = true;//是否另起一行
         int childCount = getChildCount();
         for(int i = 0; i < childCount - 1; ++i){
             View child = getChildAt(i);
@@ -275,11 +314,197 @@ public class FlowLayout extends ViewGroup {
         return Math.max(0,sizeLeft);
     }
 
+    private int getChildGravity(View child){
+        int childGravity = ((LayoutParams)child.getLayoutParams()).mGravity;
+        if(childGravity < 0)
+            childGravity = mDefaultChildGravity;
+        return childGravity;
+    }
+
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        // TODO: 16/8/20
+        layoutHorizontal(l, t, r, b);
+        // TODO: 16/8/20 layout vertical
     }
-    
+
+    /**
+     * 水平排列,(暂未考虑从左排列还是从右排列,以后实现)
+     * @param l
+     * @param t
+     * @param r
+     * @param b
+     */
+    private void layoutHorizontal(int l, int t, int r, int b){
+        int bandLeft = l + getPaddingLeft();
+        int bandTop = t + getPaddingTop();
+
+        if((mShowGaps & SHOW_GAP_BEGINNING) > 0){
+            bandLeft += mGapWidth;
+        }
+
+        if((mShowDividers & SHOW_DIVIDER_BEGINNING) > 0){
+            bandTop += mDividerWidth;
+        }
+
+        int childLeft = bandLeft;
+        int childTop = bandTop;
+
+
+        int childStart = 0;
+        int childEnd = 0;
+        int bandCount = mBands.size();
+        for(int bandIndex = 0; bandIndex < bandCount ; ++bandIndex){
+            Band band = mBands.get(bandIndex);
+            band.setBandTop(bandTop);
+            int bandWidth = band.getBandWidth();
+            if(isBandWidthFixed()){
+                bandWidth = mBandWidth;
+            }
+
+            childStart = childEnd;
+            if(bandIndex < bandCount - 1){
+                childEnd = mBands.get(bandIndex + 1).getStartIndex();
+            }else {
+                childEnd = getChildCount() - 1;
+            }
+
+            childLeft = bandLeft;
+
+            for(int childIndex = childStart; childIndex < childEnd; ++childIndex){
+                View child = getChildAt(childIndex);
+                if(child.getVisibility() == GONE){
+                    continue;
+                }
+
+                LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                int childWidth = child.getMeasuredWidth();
+                int childHeight = child.getMeasuredHeight();
+                childLeft += lp.leftMargin;
+
+                int childGravity = getChildGravity(child);
+                switch (childGravity & Gravity.VERTICAL_GRAVITY_MASK){
+                    case Gravity.TOP :
+                        childTop = bandTop + lp.topMargin;
+                        break;
+                    case Gravity.CENTER_VERTICAL:
+                        childTop = bandTop + (bandWidth - childHeight) / 2 ;
+                        break;
+                    default:
+                        childTop = bandTop + bandWidth - childHeight - lp.bottomMargin;
+                }
+
+                child.layout(childLeft,childTop,childLeft + childWidth,childTop + childHeight);
+                childLeft += child.getMeasuredWidth() + lp.rightMargin;
+            }
+
+            bandTop += bandWidth;
+            if((mShowDividers & SHOW_DIVIDER_MIDDLE) > 0){
+                bandTop += mDividerWidth;
+            }
+        }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if(mDivider == null && mGap == null)
+            return;
+
+        drawHorizontal(canvas);
+        // TODO: 16/8/30 draw vertical
+    }
+
+    private void drawHorizontal(Canvas canvas){
+        int dividerWidth = mDividerWidth;
+        int dividerLeft = getPaddingLeft();
+        int dividerRight = getWidth() - getPaddingRight();
+        int dividerTop = 0;
+        int dividerBottom = 0;
+
+        int gapWidth = mGapWidth;
+        int gapLeft = 0;
+        int gapRight = 0;
+        int gapTop = 0;
+        int gapBottom = 0;
+
+        int childStart = 0;
+        int childEnd = 0;
+        boolean showDividerBegin = (mShowDividers & SHOW_DIVIDER_BEGINNING) > 0;
+        boolean showDividersMiddle = (mShowDividers & SHOW_DIVIDER_MIDDLE) > 0;
+        boolean showDividerEnd = (mShowDividers & SHOW_DIVIDER_END) > 0;
+        boolean showGapBegin = (mShowGaps & SHOW_GAP_BEGINNING) > 0;
+        boolean showGapsMiddle = (mShowGaps & SHOW_DIVIDER_MIDDLE) > 0;
+        boolean showGapsEnd = (mShowGaps & SHOW_DIVIDER_END) > 0;
+        int bandCount = mBands.size();
+        for(int bandIndex = 0; bandIndex < bandCount; ++bandCount){
+            Band band = mBands.get(bandIndex);
+            dividerBottom = band.getBandTop();
+            dividerTop = dividerBottom + dividerWidth;
+
+            if(0 == bandIndex){
+                if(showDividerBegin) {
+                    mDivider.setBounds(dividerLeft, dividerTop, dividerRight, dividerBottom);
+                    mDivider.draw(canvas);
+                }
+            }else {
+                if(showDividersMiddle){
+                    mDivider.setBounds(dividerLeft,dividerTop,dividerRight,dividerBottom);
+                    mDivider.draw(canvas);
+                }
+            }
+
+            //draw gaps
+            gapLeft = getPaddingLeft();
+            gapRight = gapLeft + gapWidth;
+            gapTop = band.getBandTop();
+            gapBottom = gapTop + (mBandWidth > 0 ? mBandWidth : band.getBandWidth());
+
+            childStart = childEnd;
+            if(bandIndex < bandCount - 1){
+                childEnd = band.getStartIndex();
+            }else {
+                childEnd = getChildCount();
+            }
+            boolean firstVisibleInBand = true;
+            for (int childIndex = childStart; childIndex < childEnd; ++childStart){
+                View child = getChildAt(childIndex);
+                if(child.getVisibility() == GONE)
+                    continue;
+
+                LayoutParams lp = (LayoutParams) child.getLayoutParams();
+
+                if(firstVisibleInBand){
+                    firstVisibleInBand = false;
+                    if(showGapBegin){
+                        mGap.setBounds(gapLeft,gapTop,gapRight,gapBottom);
+                        mGap.draw(canvas);
+                    }
+                }else {
+                    if(showGapsMiddle) {
+                        mGap.setBounds(gapLeft, gapTop, gapRight, gapBottom);
+                        mGap.draw(canvas);
+                    }
+                }
+
+                gapLeft = child.getRight() + lp.rightMargin;
+            }
+            //画band中最后的gap
+            if(showGapsEnd){
+                mGap.setBounds(gapLeft,gapTop,gapRight,gapBottom);
+                mGap.draw(canvas);
+            }
+        }
+
+        //画最后的divider
+        if(bandCount > 0 && showDividerEnd){
+            Band band = mBands.get(mBands.size() - 1);
+            dividerTop = band.getBandTop() + (mBandWidth > 0 ? mBandWidth : band.getBandWidth());
+            dividerBottom = dividerTop + dividerWidth;
+
+            mDivider.setBounds(dividerLeft, dividerTop, dividerRight, dividerBottom);
+            mDivider.draw(canvas);
+        }
+    }
+
     public final boolean isBandWidthFixed(){
         return mBandWidth != BAND_WIDTH_NOT_FIXED;
     }
@@ -348,7 +573,9 @@ public class FlowLayout extends ViewGroup {
     }
 
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {
-        private boolean mCR = false;
+        public boolean mCR = false;//是否另起一行
+
+        public int mGravity = -1;
 
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
@@ -375,8 +602,9 @@ public class FlowLayout extends ViewGroup {
     }
 
     private static class Band {
-        private int mBandContentMaxWidth;
+        private int mBandContentMaxWidth;//determined on measure
         private int mStartIndex;//start child index
+        private int mBandTop;//determined on layout
 
         public int getBandWidth() {
             return mBandContentMaxWidth;
@@ -392,6 +620,14 @@ public class FlowLayout extends ViewGroup {
 
         public void setStartIndex(int startIndex) {
             this.mStartIndex = startIndex;
+        }
+
+        public int getBandTop() {
+            return mBandTop;
+        }
+
+        public void setBandTop(int bandTop) {
+            this.mBandTop = bandTop;
         }
     }
 }
