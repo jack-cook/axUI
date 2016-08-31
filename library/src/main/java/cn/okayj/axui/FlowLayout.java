@@ -258,7 +258,7 @@ public class FlowLayout extends ViewGroup {
             }
 
             if(reMeasure){//另起一行,需要重新测量
-                wMeasureSpec = MeasureSpec.makeMeasureSpec(CONTENT_WIDTH,widthMode);
+                wMeasureSpec = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(CONTENT_WIDTH,widthMode),0,lp.width);
                 child.measure(wMeasureSpec,hMeasureSpec);
             }
 
