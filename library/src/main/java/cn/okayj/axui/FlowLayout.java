@@ -100,14 +100,14 @@ public class FlowLayout extends ViewGroup {
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes){
         TypedArray a = context.obtainStyledAttributes(attrs,R.styleable.FlowLayout,defStyleAttr,defStyleRes);
 
-        mGap = a.getDrawable(R.styleable.FlowLayout_gap);
+        Drawable gap = a.getDrawable(R.styleable.FlowLayout_gap);
         mShowGaps = a.getInt(R.styleable.FlowLayout_showGaps,SHOW_GAP_NONE);
-//        mDivider = a.getDrawable(R.styleable.FlowLayout_android_divider);
+//      Drawable  divider = a.getDrawable(R.styleable.FlowLayout_android_divider);
 //        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
         mBandWidth = a.getDimensionPixelSize(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
 //        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
 
-        setGapDrawable(mGap);
+        setGapDrawable(gap);
         setDividerDrawable(mDivider);
 
         a.recycle();
@@ -124,7 +124,7 @@ public class FlowLayout extends ViewGroup {
         final boolean hasGapBegin = (mShowGaps & SHOW_GAP_BEGINNING) > 0;
         final boolean hasGapMiddle = (mShowGaps & SHOW_GAP_MIDDLE) > 0;
         final boolean hasGapEnd = (mShowGaps & SHOW_GAP_END) > 0;
-        final boolean hasDividerBegin = (mShowDividers & SHOW_GAP_BEGINNING) > 0;
+        final boolean hasDividerBegin = (mShowDividers & SHOW_DIVIDER_BEGINNING) > 0;
         final boolean hasDividerMiddle = (mShowDividers & SHOW_DIVIDER_MIDDLE) > 0;
         final boolean hasDividerEnd = (mShowDividers & SHOW_DIVIDER_END) > 0;
 
@@ -152,7 +152,7 @@ public class FlowLayout extends ViewGroup {
         int maxBandLength = 0;//最长band,用来计算宽度
         int contentHeight = 0;//用来计算高度
         boolean newBand = true;//是否另起一行
-        int childCount = getChildCount();
+        final int childCount = getChildCount();
         for(int i = 0; i < childCount; ++i){
             View child = getChildAt(i);
             if(child.getVisibility() == GONE){
@@ -347,22 +347,10 @@ public class FlowLayout extends ViewGroup {
         int occupied = 0;
         if(orientation == HORIZONTAL){
             occupied += getPaddingLeft() + getPaddingRight();
-            if(mOrientation == HORIZONTAL){
-                int edgeGapCount = 0;
-                // TODO: 16/8/27 count edge gap
-                return occupied += mGapWidth * edgeGapCount;
-            }else {
-                return occupied;
-            }
+            return occupied;
         }else {
             occupied += getPaddingTop() + getPaddingBottom();
-            if(mOrientation == VERTICAL){
-                int edgeGapCount = 0;
-                // TODO: 16/8/27 count edge gap
-                return occupied += mGapWidth * edgeGapCount;
-            }else {
-                return occupied;
-            }
+            return occupied;
         }
 
     }
@@ -409,7 +397,7 @@ public class FlowLayout extends ViewGroup {
 
         int childStart = 0;
         int childEnd = 0;
-        int bandCount = mBands.size();
+        final int bandCount = mBands.size();
         for(int bandIndex = 0; bandIndex < bandCount ; ++bandIndex){
             Band band = mBands.get(bandIndex);
             band.setBandTop(bandTop);
@@ -489,10 +477,10 @@ public class FlowLayout extends ViewGroup {
         boolean showDividersMiddle = (mShowDividers & SHOW_DIVIDER_MIDDLE) > 0;
         boolean showDividerEnd = (mShowDividers & SHOW_DIVIDER_END) > 0;
         boolean showGapBegin = (mShowGaps & SHOW_GAP_BEGINNING) > 0;
-        boolean showGapsMiddle = (mShowGaps & SHOW_DIVIDER_MIDDLE) > 0;
-        boolean showGapsEnd = (mShowGaps & SHOW_DIVIDER_END) > 0;
-        int bandCount = mBands.size();
-        for(int bandIndex = 0; bandIndex < bandCount; ++bandCount){
+        boolean showGapsMiddle = (mShowGaps & SHOW_GAP_MIDDLE) > 0;
+        boolean showGapsEnd = (mShowGaps & SHOW_GAP_END) > 0;
+        final int bandCount = mBands.size();
+        for(int bandIndex = 0; bandIndex < bandCount; ++bandIndex){
             Band band = mBands.get(bandIndex);
             dividerBottom = band.getBandTop();
             dividerTop = dividerBottom + dividerWidth;
@@ -522,7 +510,7 @@ public class FlowLayout extends ViewGroup {
                 childEnd = getChildCount();
             }
             boolean firstVisibleInBand = true;
-            for (int childIndex = childStart; childIndex < childEnd; ++childStart){
+            for (int childIndex = childStart; childIndex < childEnd; ++childIndex){
                 View child = getChildAt(childIndex);
                 if(child.getVisibility() == GONE)
                     continue;

@@ -8,6 +8,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:bandWidth="100dp"
+        app:gap="@drawable/gap"
+        app:showGaps="middle"
         >
         <TextView
             android:layout_width="wrap_content"
@@ -18,6 +20,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            app:carriageReturn="true"
             android:layout_margin="10dp"
             android:text="还是收一xx下"
             />
@@ -36,13 +39,17 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            app:carriageReturn="true"
             android:layout_gravity="top"
             android:layout_margin="10dp"
             android:text="还是收一下"
             />
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            app:carriageReturn="true"
+            android:layout_gravity="top"
+            android:layout_margin="10dp"
             android:text="还是收一下"
             />
 
