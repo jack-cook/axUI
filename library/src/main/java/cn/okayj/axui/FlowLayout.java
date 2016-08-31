@@ -168,29 +168,6 @@ public class FlowLayout extends ViewGroup {
             boolean reMeasure = false;
 
 
-            ////////////////////
-            //计算高度限制
-            ///////////////////
-            if(fixedBandWidth){
-                        /*
-                        用带宽去限制child的高度
-                         */
-
-                if(lp.height == LayoutParams.MATCH_PARENT){
-                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(mBandWidth - lp.topMargin - lp.bottomMargin),MeasureSpec.EXACTLY);
-                }else{
-                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(mBandWidth - lp.topMargin - lp.bottomMargin),MeasureSpec.AT_MOST);
-                }
-            }else {
-                        /*
-                        用父试图的高度限制
-                         */
-                if(heightMode == MeasureSpec.UNSPECIFIED){
-                    hMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
-                }else {
-                    hMeasureSpec = MeasureSpec.makeMeasureSpec(getChildMeasureSize(CONTENT_HEIGHT - lp.topMargin - lp.bottomMargin), heightMode);// TODO: 16/8/27 ok?
-                }
-            }
 
 
             //////////////////////////
@@ -242,6 +219,33 @@ public class FlowLayout extends ViewGroup {
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
             }
 
+
+            ////////////////////
+            //计算高度限制
+            ///////////////////
+
+            if(fixedBandWidth){
+                        /*
+                        用带宽去限制child的高度
+                         */
+                hMeasureSpec = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(mBandWidth,MeasureSpec.EXACTLY),lp.topMargin + lp.bottomMargin,lp.height);
+            }else {
+
+                        /*
+                        用父试图的高度限制
+                         */
+                int heightLeft = CONTENT_HEIGHT - contentHeight;
+                if(newBand){
+                    if(hasDividerBegin)
+                        heightLeft -= mDividerWidth;
+                }else {
+                    if(hasDividerMiddle)
+                        heightLeft -= mDividerWidth;
+                }
+                hMeasureSpec = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(getChildMeasureSize(heightLeft),heightMode),lp.topMargin + lp.bottomMargin,lp.height);
+            }
+
+
             /////////////////////////////////
             //首次尝试测量,包含新行和非新行的情况
             /////////////////////////////////
@@ -279,17 +283,23 @@ public class FlowLayout extends ViewGroup {
             bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
 
             if(newBand){//新行,老行的计算工作已完成,需要保存老行的数据
+                maxBandLength = Math.max(preBandLength,maxBandLength);
+                contentHeight += preBandWidth;
                 if(band != null){//set pre band max width
                     band.setBandWidth(preBandWidth);
+
+                    if(hasDividerMiddle)
+                        contentHeight += mDividerWidth;
+                }else {
+                    if(hasDividerBegin){
+                        contentHeight += mDividerWidth;
+                    }
                 }
 
                 band = new Band();
                 band.setStartIndex(i);
                 mBands.add(band);
                 newBand = false;
-
-                maxBandLength = Math.max(preBandLength,maxBandLength);
-                contentHeight += preBandWidth;
             }
         }
 
@@ -299,14 +309,15 @@ public class FlowLayout extends ViewGroup {
         //last band
         if(band != null){
             band.setBandWidth(bandWidth);
-        }
-        maxBandLength = Math.max(bandLength,maxBandLength);
-        contentHeight += bandWidth;
 
-        int bandCount = mBands.size();
-        if(bandCount > 0){
-            contentHeight += (bandCount -1) * mDividerWidth;
+            maxBandLength = Math.max(bandLength,maxBandLength);
+
+            contentHeight += bandWidth;
+            if(hasDividerEnd)
+                contentHeight += mDividerWidth;
         }
+
+
 
         width = maxBandLength + CONTENT_OCCUPIED_HORIZONTAL;
         height = contentHeight + CONTENT_OCCUPIED_VERTICAL;
