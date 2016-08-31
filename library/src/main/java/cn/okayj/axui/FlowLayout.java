@@ -196,7 +196,7 @@ public class FlowLayout extends ViewGroup {
                     newBand = true;
 //                    preBandLength = bandLength;//todo 这里和后面可能有错误!!!!
 //                    bandLength = 0;
-//                    tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
+                    tempBandLength = 0 + lp.leftMargin + lp.rightMargin + mGapWidth;
                 }
 
                 if(lp.width == LayoutParams.MATCH_PARENT){
@@ -241,7 +241,6 @@ public class FlowLayout extends ViewGroup {
                     band.setBandWidth(preBandWidth);
                 }
 
-                bandLength = 0;
                 band = new Band();
                 band.setStartIndex(i);
                 mBands.add(band);
