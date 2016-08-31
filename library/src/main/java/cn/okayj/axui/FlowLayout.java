@@ -104,7 +104,7 @@ public class FlowLayout extends ViewGroup {
         mShowGaps = a.getInt(R.styleable.FlowLayout_showGaps,SHOW_GAP_NONE);
 //        mDivider = a.getDrawable(R.styleable.FlowLayout_android_divider);
 //        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
-        mBandWidth = a.getInt(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
+        mBandWidth = a.getDimensionPixelSize(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
 //        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
 
         setGapDrawable(mGap);
@@ -320,7 +320,22 @@ public class FlowLayout extends ViewGroup {
 
 
         width = maxBandLength + CONTENT_OCCUPIED_HORIZONTAL;
-        height = contentHeight + CONTENT_OCCUPIED_VERTICAL;
+        height = CONTENT_OCCUPIED_VERTICAL;
+        if(fixedBandWidth){
+            if(mBands.size() > 0) {
+                int dividerCount = 0;
+                if (hasDividerBegin)
+                    dividerCount++;
+                if (hasDividerEnd)
+                    dividerCount++;
+                if (hasDividerMiddle)
+                    dividerCount += mBands.size() - 1;
+
+                height += mDividerWidth * dividerCount + mBandWidth * mBands.size();
+            }
+        }else {
+            height += contentHeight;
+        }
         width = Math.max(width,getSuggestedMinimumWidth());
         height = Math.max(height,getSuggestedMinimumHeight());
 
