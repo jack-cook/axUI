@@ -102,13 +102,13 @@ public class FlowLayout extends ViewGroup {
 
         Drawable gap = a.getDrawable(R.styleable.FlowLayout_gap);
         mShowGaps = a.getInt(R.styleable.FlowLayout_showGaps,SHOW_GAP_NONE);
-//      Drawable  divider = a.getDrawable(R.styleable.FlowLayout_android_divider);
-//        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
+        Drawable  divider = a.getDrawable(R.styleable.FlowLayout_android_divider);
+        mShowDividers = a.getInt(R.styleable.FlowLayout_android_showDividers,SHOW_DIVIDER_NONE);
         mBandWidth = a.getDimensionPixelSize(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
-//        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
+        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
 
         setGapDrawable(gap);
-        setDividerDrawable(mDivider);
+        setDividerDrawable(divider);
 
         a.recycle();
     }
@@ -373,7 +373,7 @@ public class FlowLayout extends ViewGroup {
     }
 
     /**
-     * 水平排列,(暂未考虑从左排列还是从右排列,以后实现)
+     * 水平排列,(暂未考虑从左排列还是从右排列,以后实现) todo 未考虑gap
      * @param l
      * @param t
      * @param r
@@ -467,7 +467,6 @@ public class FlowLayout extends ViewGroup {
 
         int gapWidth = mGapWidth;
         int gapLeft = 0;
-        int gapRight = 0;
         int gapTop = 0;
         int gapBottom = 0;
 
@@ -483,7 +482,7 @@ public class FlowLayout extends ViewGroup {
         for(int bandIndex = 0; bandIndex < bandCount; ++bandIndex){
             Band band = mBands.get(bandIndex);
             dividerBottom = band.getBandTop();
-            dividerTop = dividerBottom + dividerWidth;
+            dividerTop = dividerBottom - dividerWidth;
 
             if(0 == bandIndex){
                 if(showDividerBegin) {
@@ -641,7 +640,7 @@ public class FlowLayout extends ViewGroup {
             super(c, attrs);
 
             TypedArray a = c.obtainStyledAttributes(attrs,R.styleable.FlowLayout_Layout);
-//            mGravity = a.getInt(R.styleable.FlowLayout_Layout_android_layout_gravity,mGravity);
+            mGravity = a.getInt(R.styleable.FlowLayout_Layout_android_layout_gravity,mGravity);
             mCarriageReturn = a.getBoolean(R.styleable.FlowLayout_Layout_carriageReturn,mCarriageReturn);
 
             a.recycle();

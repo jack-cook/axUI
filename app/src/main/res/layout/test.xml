@@ -10,6 +10,8 @@
         app:bandWidth="100dp"
         app:gap="@drawable/gap"
         app:showGaps="middle"
+        android:divider="@drawable/gap"
+        android:showDividers="middle"
         >
         <TextView
             android:layout_width="wrap_content"
