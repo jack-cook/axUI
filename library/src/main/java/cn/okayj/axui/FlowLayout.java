@@ -121,6 +121,13 @@ public class FlowLayout extends ViewGroup {
     }
 
     void measureHorizontal(int widthMeasureSpec, int heightMeasureSpec) {
+        final boolean hasGapBegin = (mShowGaps & SHOW_GAP_BEGINNING) > 0;
+        final boolean hasGapMiddle = (mShowGaps & SHOW_GAP_MIDDLE) > 0;
+        final boolean hasGapEnd = (mShowGaps & SHOW_GAP_END) > 0;
+        final boolean hasDividerBegin = (mShowDividers & SHOW_GAP_BEGINNING) > 0;
+        final boolean hasDividerMiddle = (mShowDividers & SHOW_DIVIDER_MIDDLE) > 0;
+        final boolean hasDividerEnd = (mShowDividers & SHOW_DIVIDER_END) > 0;
+
         int width = 0;
         int height = 0;
 
@@ -160,9 +167,10 @@ public class FlowLayout extends ViewGroup {
             int hMeasureSpec;
             boolean reMeasure = false;
 
-            /*
-            *计算高度限制
-             */
+
+            ////////////////////
+            //计算高度限制
+            ///////////////////
             if(fixedBandWidth){
                         /*
                         用带宽去限制child的高度
@@ -185,16 +193,31 @@ public class FlowLayout extends ViewGroup {
             }
 
 
-            /*
-            *计算宽度限制并测量,有可能要另起一行
-             */
-            if(widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST){
-                tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
-                if(!newBand && CONTENT_WIDTH < tempBandLength){
-                    //因为margin而放不下,需要另起一行。
-                    
-                    newBand = true;
-                    tempBandLength = 0 + lp.leftMargin + lp.rightMargin + mGapWidth;
+            //////////////////////////
+            //计算宽度限制,有可能要另起一行
+            /////////////////////////
+            tempBandLength = bandLength + lp.leftMargin + lp.rightMargin;//准备测量的数据,此时并不确定是否为新行
+            if(widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST) {
+
+                //非新行,测量前判断是否放得下,若预知放不下,则换行,无需尝试测量
+                if (!newBand) {
+                    if(hasGapMiddle)
+                        tempBandLength += mGapWidth;
+                    if(hasGapEnd)
+                        tempBandLength += mGapWidth;
+
+                    if(CONTENT_WIDTH < tempBandLength){//测量前已经发现放不下,需另起一行
+                        newBand = true;
+                    }
+                }
+
+                //如果是新行,为新航重新准备测量数据。
+                if(newBand){
+                    tempBandLength = 0 + lp.leftMargin + lp.rightMargin;
+                    if(hasGapBegin)
+                        tempBandLength += mGapWidth;
+                    if(hasGapEnd)
+                        tempBandLength += mGapWidth;
                 }
 
                 if(lp.width == LayoutParams.MATCH_PARENT){
@@ -203,25 +226,31 @@ public class FlowLayout extends ViewGroup {
                     wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
                 }
 
-                child.measure(wMeasureSpec,hMeasureSpec);
+            }else{// widthMode == MeasureSpec.UNSPECIFIED ,宽度没有限制,无需预先判断是否需要换行
+                if(newBand){
+                    if(hasGapBegin)
+                        tempBandLength += mGapWidth;
+                    if(hasGapEnd)
+                        tempBandLength += mGapWidth;
+                }else {
+                    if(hasGapMiddle)
+                        tempBandLength += mGapWidth;
+                    if(hasGapEnd)
+                        tempBandLength += mGapWidth;
+                }
 
-
-
-            }else{// widthMode == MeasureSpec.UNSPECIFIED
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
-                child.measure(wMeasureSpec,hMeasureSpec);
             }
 
-            if(!newBand && bandLength + child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin > CONTENT_WIDTH){//需要另起一行,重新测量
+            /////////////////////////////////
+            //首次尝试测量,包含新行和非新行的情况
+            /////////////////////////////////
+            child.measure(wMeasureSpec,hMeasureSpec);
+
+
+            if(!newBand && tempBandLength + child.getMeasuredWidth() > CONTENT_WIDTH){//需要另起一行,重新测量
                 reMeasure = true;
                 newBand = true;
-            }
-
-            if(newBand){//换行,更新行的长宽,做好保存的准备。
-                preBandLength = bandLength;
-                preBandWidth = bandWidth;
-                bandLength = 0;
-                bandWidth = 0;
             }
 
             if(reMeasure){//另起一行,需要重新测量
@@ -229,11 +258,28 @@ public class FlowLayout extends ViewGroup {
                 child.measure(wMeasureSpec,hMeasureSpec);
             }
 
+            //测量完毕,更新数据
+            if(newBand){
+                if(hasGapEnd) {
+                    preBandLength = bandLength + mGapWidth;
+                }else {
+                    preBandLength = bandLength;
+                }
+                preBandWidth = bandWidth;
+                bandLength = 0;
+                bandWidth = 0;
+
+                if(hasGapBegin)
+                    bandLength += mGapWidth;
+            }else {
+                if(hasGapMiddle)
+                    bandLength += mGapWidth;
+            }
             bandLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
             bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
 
             if(newBand){//新行,老行的计算工作已完成,需要保存老行的数据
-                if(band != null){//set last band max width
+                if(band != null){//set pre band max width
                     band.setBandWidth(preBandWidth);
                 }
 
@@ -247,54 +293,27 @@ public class FlowLayout extends ViewGroup {
             }
         }
 
+
+
+
         //last band
         if(band != null){
             band.setBandWidth(bandWidth);
         }
-
-        int bandCount = mBands.size();
         maxBandLength = Math.max(bandLength,maxBandLength);
         contentHeight += bandWidth;
+
+        int bandCount = mBands.size();
         if(bandCount > 0){
             contentHeight += (bandCount -1) * mDividerWidth;
         }
+
         width = maxBandLength + CONTENT_OCCUPIED_HORIZONTAL;
         height = contentHeight + CONTENT_OCCUPIED_VERTICAL;
         width = Math.max(width,getSuggestedMinimumWidth());
         height = Math.max(height,getSuggestedMinimumHeight());
 
         setMeasuredDimension(resolveSize(width,widthMeasureSpec),resolveSize(height,heightMeasureSpec));
-
-        /*
-        *计算宽高,并计算带宽
-         *//*
-        int contentHeight = 0;
-        int contentWidth = 0;
-        int start = 0;
-        int end = 0;
-        band = null;
-        for(int i = 0; i < mBands.size() - 1; ++i){
-            band = mBands.get(i);
-            start = band.getStartIndex();
-            if(i < mBands.size() - 1){
-                end = mBands.get(i + 1).getStartIndex();
-            }else {
-                end = getChildCount() - 1;
-            }
-
-            int maxChildHeight = 0;
-            bandLength = 0;
-            for(int childIndex = start; childCount <= end; ++childCount){
-                View child = getChildAt(childIndex);
-                if(child.getVisibility() == GONE)
-                    continue;
-                maxChildHeight = Math.max(maxChildHeight,child.getMeasuredHeight());
-                bandLength += child.getMeasuredWidth();
-            }
-            band.setBandWidth(maxChildHeight);
-            contentWidth = Math.max(contentWidth,bandLength);
-            contentHeight += maxChildHeight;
-        }*/
         
     }
 
