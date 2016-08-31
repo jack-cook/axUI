@@ -499,13 +499,13 @@ public class FlowLayout extends ViewGroup {
 
             //draw gaps
             gapLeft = getPaddingLeft();
-            gapRight = gapLeft + gapWidth;
+//            gapRight = gapLeft + gapWidth;
             gapTop = band.getBandTop();
             gapBottom = gapTop + (mBandWidth > 0 ? mBandWidth : band.getBandWidth());
 
             childStart = childEnd;
             if(bandIndex < bandCount - 1){
-                childEnd = band.getStartIndex();
+                childEnd = mBands.get(bandIndex + 1).getStartIndex();
             }else {
                 childEnd = getChildCount();
             }
@@ -520,12 +520,12 @@ public class FlowLayout extends ViewGroup {
                 if(firstVisibleInBand){
                     firstVisibleInBand = false;
                     if(showGapBegin){
-                        mGap.setBounds(gapLeft,gapTop,gapRight,gapBottom);
+                        mGap.setBounds(gapLeft,gapTop,gapLeft + gapWidth,gapBottom);
                         mGap.draw(canvas);
                     }
                 }else {
                     if(showGapsMiddle) {
-                        mGap.setBounds(gapLeft, gapTop, gapRight, gapBottom);
+                        mGap.setBounds(gapLeft, gapTop, gapLeft + gapWidth, gapBottom);
                         mGap.draw(canvas);
                     }
                 }
@@ -534,7 +534,7 @@ public class FlowLayout extends ViewGroup {
             }
             //画band中最后的gap
             if(showGapsEnd){
-                mGap.setBounds(gapLeft,gapTop,gapRight,gapBottom);
+                mGap.setBounds(gapLeft,gapTop,gapLeft + gapWidth,gapBottom);
                 mGap.draw(canvas);
             }
         }
