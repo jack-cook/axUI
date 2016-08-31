@@ -161,7 +161,7 @@ public class FlowLayout extends ViewGroup {
             boolean reMeasure = false;
 
             /*
-            *计算高度限制。todo 用measureChild measureChildWidthMargin
+            *计算高度限制
              */
             if(fixedBandWidth){
                         /*
@@ -194,8 +194,6 @@ public class FlowLayout extends ViewGroup {
                     //因为margin而放不下,需要另起一行。
                     
                     newBand = true;
-//                    preBandLength = bandLength;//todo 这里和后面可能有错误!!!!
-//                    bandLength = 0;
                     tempBandLength = 0 + lp.leftMargin + lp.rightMargin + mGapWidth;
                 }
 
@@ -212,16 +210,14 @@ public class FlowLayout extends ViewGroup {
             }else{// widthMode == MeasureSpec.UNSPECIFIED
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
                 child.measure(wMeasureSpec,hMeasureSpec);
-            }/*else {// AT_MOST
-
-            }*/
+            }
 
             if(!newBand && bandLength + child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin > CONTENT_WIDTH){//需要另起一行,重新测量
                 reMeasure = true;
                 newBand = true;
             }
 
-            if(newBand){
+            if(newBand){//换行,更新行的长宽,做好保存的准备。
                 preBandLength = bandLength;
                 preBandWidth = bandWidth;
                 bandLength = 0;
@@ -230,13 +226,13 @@ public class FlowLayout extends ViewGroup {
 
             if(reMeasure){//另起一行,需要重新测量
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(CONTENT_WIDTH,widthMode);
-                measureChild(child,wMeasureSpec,heightMeasureSpec);
+                child.measure(wMeasureSpec,hMeasureSpec);
             }
 
             bandLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
             bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
 
-            if(newBand){
+            if(newBand){//新行,老行的计算工作已完成,需要保存老行的数据
                 if(band != null){//set last band max width
                     band.setBandWidth(preBandWidth);
                 }
