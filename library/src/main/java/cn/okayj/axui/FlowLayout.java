@@ -102,14 +102,15 @@ public class FlowLayout extends ViewGroup {
 
         mGap = a.getDrawable(R.styleable.FlowLayout_gap);
         mShowGaps = a.getInt(R.styleable.FlowLayout_showGaps,SHOW_GAP_NONE);
-        mDivider = a.getDrawable(R.styleable.FlowLayout_android_divider);
-        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
+//        mDivider = a.getDrawable(R.styleable.FlowLayout_android_divider);
+//        mShowDividers = a.getIndex(R.styleable.FlowLayout_android_showDividers);
         mBandWidth = a.getInt(R.styleable.FlowLayout_bandWidth,BAND_WIDTH_NOT_FIXED);
-        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
+//        mGravity = a.getInt(R.styleable.FlowLayout_android_gravity,mGravity);
 
         setGapDrawable(mGap);
         setDividerDrawable(mDivider);
-        // TODO: 16/8/20
+
+        a.recycle();
     }
 
     @Override
@@ -145,7 +146,7 @@ public class FlowLayout extends ViewGroup {
         int contentHeight = 0;//用来计算高度
         boolean newBand = true;//是否另起一行
         int childCount = getChildCount();
-        for(int i = 0; i < childCount - 1; ++i){
+        for(int i = 0; i < childCount; ++i){
             View child = getChildAt(i);
             if(child.getVisibility() == GONE){
                 continue;//当它不存在,应该不会有影响
@@ -160,7 +161,7 @@ public class FlowLayout extends ViewGroup {
             boolean reMeasure = false;
 
             /*
-            *计算高度限制。
+            *计算高度限制。todo 用measureChild measureChildWidthMargin
              */
             if(fixedBandWidth){
                         /*
@@ -193,9 +194,9 @@ public class FlowLayout extends ViewGroup {
                     //因为margin而放不下,需要另起一行。
                     
                     newBand = true;
-                    preBandLength = bandLength;
-                    bandLength = 0;
-                    tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
+//                    preBandLength = bandLength;//todo 这里和后面可能有错误!!!!
+//                    bandLength = 0;
+//                    tempBandLength = bandLength + lp.leftMargin + lp.rightMargin + mGapWidth;
                 }
 
                 if(lp.width == LayoutParams.MATCH_PARENT){
@@ -206,17 +207,7 @@ public class FlowLayout extends ViewGroup {
 
                 child.measure(wMeasureSpec,hMeasureSpec);
 
-                if(!newBand && bandLength + child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin > CONTENT_WIDTH){//需要另起一行,重新测量
-                    reMeasure = true;
-                    newBand = true;
-                    preBandLength = bandLength;
-                    bandLength = 0;
-                    preBandWidth = bandWidth;
-                    bandWidth = 0;
-                }else {
-                    bandLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
-                    bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
-                }
+
 
             }else{// widthMode == MeasureSpec.UNSPECIFIED
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED);
@@ -225,12 +216,25 @@ public class FlowLayout extends ViewGroup {
 
             }*/
 
+            if(!newBand && bandLength + child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin > CONTENT_WIDTH){//需要另起一行,重新测量
+                reMeasure = true;
+                newBand = true;
+            }
+
+            if(newBand){
+                preBandLength = bandLength;
+                preBandWidth = bandWidth;
+                bandLength = 0;
+                bandWidth = 0;
+            }
 
             if(reMeasure){//另起一行,需要重新测量
                 wMeasureSpec = MeasureSpec.makeMeasureSpec(CONTENT_WIDTH,widthMode);
-                child.measure(wMeasureSpec,hMeasureSpec);
-                bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
+                measureChild(child,wMeasureSpec,heightMeasureSpec);
             }
+
+            bandLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
+            bandWidth = Math.max(bandWidth,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
 
             if(newBand){
                 if(band != null){//set last band max width
@@ -259,8 +263,8 @@ public class FlowLayout extends ViewGroup {
         if(bandCount > 0){
             contentHeight += (bandCount -1) * mDividerWidth;
         }
-        width = maxBandLength + CONTENT_WIDTH;
-        height = contentHeight + CONTENT_HEIGHT;
+        width = maxBandLength + CONTENT_OCCUPIED_HORIZONTAL;
+        height = contentHeight + CONTENT_OCCUPIED_VERTICAL;
         width = Math.max(width,getSuggestedMinimumWidth());
         height = Math.max(height,getSuggestedMinimumHeight());
 
@@ -378,7 +382,7 @@ public class FlowLayout extends ViewGroup {
             if(bandIndex < bandCount - 1){
                 childEnd = mBands.get(bandIndex + 1).getStartIndex();
             }else {
-                childEnd = getChildCount() - 1;
+                childEnd = getChildCount();
             }
 
             childLeft = bandLeft;
@@ -585,6 +589,21 @@ public class FlowLayout extends ViewGroup {
         requestLayout();
     }
 
+    @Override
+    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        return new LayoutParams(p);
+    }
+
+    @Override
+    public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
+        return new LayoutParams(getContext(),attrs);
+    }
+
+    @Override
+    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
+        return p instanceof LayoutParams;
+    }
+
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {
         public boolean mCarriageReturn = false;//是否另起一行
 
@@ -594,8 +613,10 @@ public class FlowLayout extends ViewGroup {
             super(c, attrs);
 
             TypedArray a = c.obtainStyledAttributes(attrs,R.styleable.FlowLayout_Layout);
-            mGravity = a.getInt(R.styleable.FlowLayout_Layout_android_layout_gravity,mGravity);
+//            mGravity = a.getInt(R.styleable.FlowLayout_Layout_android_layout_gravity,mGravity);
             mCarriageReturn = a.getBoolean(R.styleable.FlowLayout_Layout_carriageReturn,mCarriageReturn);
+
+            a.recycle();
         }
 
         public LayoutParams(int width, int height) {
