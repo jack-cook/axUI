@@ -7,9 +7,9 @@
     <cn.okayj.axui.FlowLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:bandWidth="30dp"
+        app:bandWidth="50dp"
         app:gap="@drawable/gap"
-        app:showGaps="middle|end|beginning"
+        app:showGaps="middle"
         android:divider="@drawable/gap"
         android:showDividers="middle|beginning|end"
         >
@@ -29,12 +29,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="top"
             android:layout_margin="10dp"
             android:text="还是收一下"
             />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
             android:layout_margin="10dp"
             android:text="还是收一下"
             />
@@ -42,7 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:carriageReturn="true"
-            android:layout_gravity="top"
+            android:layout_gravity="bottom"
             android:layout_margin="10dp"
             android:text="还是收一下"
             />

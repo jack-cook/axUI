@@ -380,6 +380,10 @@ public class FlowLayout extends ViewGroup {
      * @param b
      */
     private void layoutHorizontal(int l, int t, int r, int b){
+        final boolean hasGapBegin = (mShowGaps & SHOW_GAP_BEGINNING) > 0;
+        final boolean hasGapMiddle = (mShowGaps & SHOW_GAP_MIDDLE) > 0;
+        final boolean hasGapEnd = (mShowGaps & SHOW_GAP_END) > 0;
+
         int bandLeft = l + getPaddingLeft();
         int bandTop = t + getPaddingTop();
 
@@ -415,10 +419,20 @@ public class FlowLayout extends ViewGroup {
 
             childLeft = bandLeft;
 
+            boolean firstVisibleInBand = true;
             for(int childIndex = childStart; childIndex < childEnd; ++childIndex){
                 View child = getChildAt(childIndex);
                 if(child.getVisibility() == GONE){
                     continue;
+                }
+
+                if(firstVisibleInBand){
+                    firstVisibleInBand = false;
+                    if(hasGapBegin)
+                        childLeft += mGapWidth;
+                }else {
+                    if(hasGapMiddle)
+                        childLeft += mGapWidth;
                 }
 
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
