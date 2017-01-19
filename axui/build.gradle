@@ -7,7 +7,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 
 ext {
-    pkgVersion = "0.1.0";
+    pkgVersion = "0.1.1";
 }
 
 
