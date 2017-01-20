@@ -54,7 +54,7 @@ public abstract class ViewHolder<T> {
         onSetItem(item);
     }
 
-    protected abstract void onSetItem(T item);
+    protected void onSetItem(T item){}
 
     public T getItem(){
         return item;
