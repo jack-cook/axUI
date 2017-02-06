@@ -1,4 +1,10 @@
+plugins {
+    id "com.jfrog.bintray" version "1.6"
+}
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+
+init()
 
 android {
     compileSdkVersion COMPILE_SDK_VERSION as int
@@ -18,9 +24,94 @@ android {
     }
 }
 
+ext {
+    pkgVersion = "0.1.2";
+}
+
+
+group = 'cn.okayj'
+version = pkgVersion
+archivesBaseName = 'axui-support-recyclerview'
+
+def siteUrl = 'https://github.com/jack-cook/axUI'
+def gitUrl = 'https://github.com/jack-cook/axUI.git'
+
+bintray {
+    user = local.getAt("BINTRAY_USER");
+    key = local.getAt('BINTRAY_KEY');
+
+    configurations = ['archives']
+    pkg {
+        repo = 'maven'
+        name = 'axui-support-recyclerview'
+        licenses = ['Apache-2.0']
+
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+
+        version {
+            name = pkgVersion
+        }
+    }
+}
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                name 'axui-support-recyclerview'
+                url siteUrl
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'okayj'
+                        name 'Jack Cook'
+                        email '497737103@qq.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+void init(){
+    Properties localProperties = new Properties();
+    localProperties.load(new FileInputStream(file('../local.properties')));
+    ext {
+        local = localProperties;
+    }
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile "com.android.support:recyclerview-v7:${SUPPORT_PACKAGE_VERSION}"
-    compile project(':axui')
+    compile 'cn.okayj:axui:0.1.2'
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
 }

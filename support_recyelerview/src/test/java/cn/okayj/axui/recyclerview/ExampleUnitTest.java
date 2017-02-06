@@ -1,4 +1,4 @@
-package cn.okayj.axui.support;
+package cn.okayj.axui.recyclerview;
 
 import org.junit.Test;
 

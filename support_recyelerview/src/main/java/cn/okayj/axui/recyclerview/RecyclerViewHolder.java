@@ -1,4 +1,4 @@
-package cn.okayj.axui.support;
+package cn.okayj.axui.recyclerview;
 
 import android.support.v7.widget.RecyclerView;
 import cn.okayj.axui.viewholder.ViewHolder;
