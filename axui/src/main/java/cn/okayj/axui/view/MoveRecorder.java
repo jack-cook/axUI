@@ -9,17 +9,17 @@ import android.view.MotionEvent;
 public class MoveRecorder {
     private static final int INVALID_POINTER = -1;
 
-    protected float mPointerDownX;
+    private float mPointerDownX;
 
-    protected float mPointerDownY;
+    private float mPointerDownY;
 
-    protected float mDeltaX;
+    private float mDeltaX;
 
-    protected float mDeltaY;
+    private float mDeltaY;
 
-    protected float mPreDeltaX;
+    private float mPreDeltaX;
 
-    protected float mPreDeltaY;
+    private float mPreDeltaY;
 
     private int mActivePointerId = INVALID_POINTER;
 
