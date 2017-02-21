@@ -9,23 +9,29 @@ import android.view.MotionEvent;
 public class MoveRecorder {
     private static final int INVALID_POINTER = -1;
 
+    /**
+     * 点差距的起点，根据{@link #mActivePointerId}变化而变化
+     */
     private float mPointerDownX;
 
+    /**
+     * 点差距的起点，根据{@link #mActivePointerId}变化而变化
+     */
     private float mPointerDownY;
 
-    private float mDeltaX;
+    private float mDeltaX;//点差距
 
-    private float mDeltaY;
+    private float mDeltaY;//点差距
 
-    private float mPreDeltaX;
+    private float mPreDeltaX;//累计的距离
 
-    private float mPreDeltaY;
+    private float mPreDeltaY;//累计的距离
 
     private int mActivePointerId = INVALID_POINTER;
 
     public void record(MotionEvent motionEvent) {
         final int action = motionEvent.getActionMasked();
-        int pointerIndex = -1;
+        int pointerIndex;
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
@@ -70,7 +76,7 @@ public class MoveRecorder {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                reset();
+                //不做什么
         }
     }
 
