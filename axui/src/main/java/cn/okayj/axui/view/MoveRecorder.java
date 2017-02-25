@@ -4,6 +4,7 @@ import android.view.MotionEvent;
 
 /**
  * Created by jack on 2017/2/21.
+ * 默认记录的事件为触摸事件,传其他类型的事件会出错
  */
 
 public class MoveRecorder {
@@ -29,20 +30,30 @@ public class MoveRecorder {
 
     private int mActivePointerId = INVALID_POINTER;
 
+    private boolean mInRecording = false;
+
     public void record(MotionEvent motionEvent) {
         final int action = motionEvent.getActionMasked();
         int pointerIndex;
 
+        /*
+        figure out start point and init
+         */
+        if (!mInRecording || action == MotionEvent.ACTION_DOWN) {
+            mActivePointerId = motionEvent.getPointerId(0);
+            mPointerDownX = motionEvent.getX(0);
+            mPointerDownY = motionEvent.getY(0);
+            mDeltaX = 0;
+            mDeltaY = 0;
+            mPreDeltaX = 0;
+            mPreDeltaY = 0;
+
+            mInRecording = true;
+            return;
+        }
+
         switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                mActivePointerId = motionEvent.getPointerId(0);
-                mPointerDownX = motionEvent.getX();
-                mPointerDownY = motionEvent.getY();
-                mDeltaX = 0;
-                mDeltaY = 0;
-                mPreDeltaX = 0;
-                mPreDeltaY = 0;
-                break;
+            //case MotionEvent.ACTION_DOWN: handled before
             case MotionEvent.ACTION_POINTER_DOWN:
                 //如果有新的触摸点，跟踪新的触摸点，放弃跟踪之前的触摸点
                 pointerIndex = motionEvent.getActionIndex();
@@ -76,16 +87,37 @@ public class MoveRecorder {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                //不做什么
+                mInRecording = false;
         }
     }
 
-    public float getDeltaX(){
+    public void newStartPoint(MotionEvent motionEvent) {
+        mActivePointerId = motionEvent.getPointerId(0);
+        mPointerDownX = motionEvent.getX(0);
+        mPointerDownY = motionEvent.getY(0);
+        mDeltaX = 0;
+        mDeltaY = 0;
+        mPreDeltaX = 0;
+        mPreDeltaY = 0;
+
+        mInRecording = true;
+    }
+
+    public float getDeltaX() {
         return mDeltaX + mPreDeltaX;
     }
 
-    public float getDeltaY(){
+    public float getDeltaY() {
         return mDeltaY + mPreDeltaY;
+    }
+
+    /**
+     * 是否处在持续记录的中间过程，{@link #reset()} 和 ACTION_UP， ACTION_CANCEL 都会使这个状态为false
+     *
+     * @return
+     */
+    public boolean isInMiddleOfRecording() {
+        return mInRecording;
     }
 
     public void reset() {
@@ -96,6 +128,8 @@ public class MoveRecorder {
         mDeltaY = 0;
         mPreDeltaX = 0;
         mPreDeltaY = 0;
+
+        mInRecording = false;
     }
 
 }
