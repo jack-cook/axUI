@@ -18,6 +18,14 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
     private static final int MAX_OFFSET_ANIMATION_DURATION = 700;
 
+
+    private static final int VIEW_STATE_OFFSET_TOP = 1;
+
+    private static final int VIEW_STATE_HOME = 0;//no offset
+
+    private static final int VIEW_STATE_OFFSET_BOTTOM = -1;
+
+
     /*private static final int STATE_IDLE = 0;
     private static final int STATE_DRAGING_DOWN = 1;
     private static final int STATE_REFRESHING_TOP = 2;
@@ -54,6 +62,8 @@ public abstract class DragRefreshLayout extends ViewGroup {
     private boolean mRefreshBottomEnabled;
 
     private boolean mDraging;
+
+    private int mViewState = VIEW_STATE_HOME;
 
     private Animation mTopRefreshAnimation;
 
@@ -92,31 +102,35 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+
+        if (!mRefreshTopEnabled && !mRefreshBottomEnabled) {
+            return false;
+        }
+
         mMoveRecorder.record(ev);
         final int deltaY = (int) mMoveRecorder.getDeltaY();
 
+        //子视图能处理
         if (canChildScroll(deltaY)) {
             mMoveRecorder.reset();
             return false;
         }
 
-        if (canDrag()) {
+        //正处在偏移状态，可拖动
+        if (mViewState != VIEW_STATE_HOME) {
             mMoveRecorder.reset();
-            mDraging = true;
             return true;
         }
 
         //down touch slop
         if (deltaY > 0 && deltaY > mTouchSlop) {
             mMoveRecorder.reset();
-            mDraging = true;
             return true;
         }
 
         //up touch slop
         if (deltaY < 0 && -deltaY > mTouchSlop) {
             mMoveRecorder.reset();
-            mDraging = true;
             return true;
         }
 
@@ -132,15 +146,13 @@ public abstract class DragRefreshLayout extends ViewGroup {
             return false;
         }
 
-        //不管处于什么状态，都置为dragging状态，从此之后掌管touch事件
-        mDraging = true;
 
-        //todo 目前用此方法判断用户是否刚开始drag，后续可能会修改判断方式
-        if (!mMoveRecorder.isInMiddleOfRecording()) {
+        if (!mDraging) {
             mPreTotalOffset = mTotalOffset;
             //start dragging and stop any animation
             stopAnimation();
             mMoveRecorder.newStartPoint(event);
+            mDraging = true;
             return true;
         }
 
@@ -168,36 +180,17 @@ public abstract class DragRefreshLayout extends ViewGroup {
             //拖动完成，刷新或者回归状态
             //---------------------
             case MotionEvent.ACTION_UP:
-                if (mTotalOffset > 0) {
-                    if (mRefreshTopEnabled && mTotalOffset >= mStopOffsetTop) {
-                        refreshTop(true);
-                    } else {
-                        startToTopAnimation();
-                    }
-                } else if (mTotalOffset < 0) {
-                    if (mRefreshBottomEnabled && -mTotalOffset >= mStopOffsetBottom) {
-                        refreshBottom(true);
-                    } else {
-                        startToBottomAnimation();
-                    }
-                }
-
                 mMoveRecorder.reset();
                 mDraging = false;
-
+                onDragEnd(true);
                 break;
             //--------------------------
             //事件被截取，回归状态
             //--------------------------
             case MotionEvent.ACTION_CANCEL:
-                if (mTotalOffset > 0)
-                    startToTopAnimation();
-                else if (mTotalOffset < 0)
-                    startToBottomAnimation();
-
                 mMoveRecorder.reset();
                 mDraging = false;
-
+                onDragEnd(false);
                 break;
             //-------------------------
             //移动事件，移动视图
@@ -250,7 +243,47 @@ public abstract class DragRefreshLayout extends ViewGroup {
         // TODO: 2017/2/21
     }
 
+    /**
+     * 拖拽事件结束，运行动画，根据视图状态判断是否触发刷新。
+     * @param tryTriggerRefresh
+     */
+    private void onDragEnd(boolean tryTriggerRefresh) {
+        if (mTotalOffset > 0) {
+            if (mTotalOffset >= mStopOffsetTop) {
+                if (mRefreshingTop) {
+                    startRefreshTopAnimation();
+                } else {
+                    if(mRefreshTopEnabled && tryTriggerRefresh) {
+                        refreshTop(true);
+                    }else {
+                        startToTopAnimation();
+                    }
+                }
+            } else {
+                startToTopAnimation();
+            }
+        } else if (mTotalOffset < 0) {
+            if(mTotalOffset <= mStopOffsetBottom) {
+                if(mRefreshingBottom) {
+                    startRefreshBottomAnimation();
+                } else {
+                    if(mRefreshBottomEnabled && tryTriggerRefresh){
+                        refreshBottom(true);
+                    }else {
+                        startToBottomAnimation();
+                    }
+                }
+            }else {
+                startToBottomAnimation();
+            }
+        }
+    }
+
+    /**
+     * 根据偏移移动视图，该方法维护视图状态并通知listener视图的移动
+     */
     private void move() {
+
         int currentTop = mMainView.getTop();
         int distance = mTotalOffset - currentTop;
         mMainView.offsetTopAndBottom(distance);
@@ -263,32 +296,47 @@ public abstract class DragRefreshLayout extends ViewGroup {
         }
 
 
-        //notify
-        if (mCurrentTouchOffset > 0) {
-            float movePercent = ((float) mTotalOffset) / mStopOffsetTop;
-            mInternalTopRefreshListener.onMoved(mTotalOffset, movePercent);
-        } else if (mCurrentTouchOffset < 0) {
-            float movePercent = ((float) mTotalOffset) / mStopOffsetBottom;
-            mInternalBottomRefreshListerner.onMoved(mTotalOffset, movePercent);
-        } else {
-            if (currentTop > 0) {
-                mInternalTopRefreshListener.onMoved(0,0);
-            } else if (currentTop < 0) {
-                mInternalBottomRefreshListerner.onMoved(0,0);
-            } else {
-                //throw new IllegalStateException();
-            }
+        //----------------------
+        //change state and notify listener
+        //----------------------
+        float movePercent;
+        switch (mViewState) {
+            case VIEW_STATE_HOME:
+                if (mTotalOffset == 0) {
+                    break;// state not change, do nothing
+                }
+
+                movePercent = ((float) mTotalOffset) / mStopOffsetTop;
+                if (mTotalOffset > 0) {
+                    mViewState = VIEW_STATE_OFFSET_TOP;
+                    mInternalTopRefreshListener.onMoved(mTotalOffset, movePercent);
+                } else {
+                    mViewState = VIEW_STATE_OFFSET_BOTTOM;
+                    mInternalBottomRefreshListerner.onMoved(mTotalOffset, movePercent);
+                }
+                break;
+            case VIEW_STATE_OFFSET_TOP:
+                if (mTotalOffset == 0) {
+                    mViewState = VIEW_STATE_HOME;
+                    mInternalTopRefreshListener.onMoved(0, 0);
+                    break;
+                }
+
+                movePercent = ((float) mTotalOffset) / mStopOffsetTop;
+                mInternalTopRefreshListener.onMoved(mTotalOffset, movePercent);
+                break;
+            case VIEW_STATE_OFFSET_BOTTOM:
+                if (mTotalOffset == 0) {
+                    mViewState = VIEW_STATE_HOME;
+                    mInternalBottomRefreshListerner.onMoved(0, 0);
+                    break;
+                }
+
+                movePercent = ((float) mTotalOffset) / mStopOffsetBottom;
+                mInternalBottomRefreshListerner.onMoved(mTotalOffset, movePercent);
+                break;
         }
 
-    }
-
-    /**
-     * 判断是否处于能拖拽的状态
-     *
-     * @return
-     */
-    private boolean canDrag() {
-        return mDraging || Math.abs(mTotalOffset) > mTouchSlop;
     }
 
     public void refreshTop(boolean refresh) {
