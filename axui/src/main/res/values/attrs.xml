@@ -76,4 +76,9 @@
         <attr name="android:layout_gravity"/>
         <attr name="carriageReturn" format="boolean"/>
     </declare-styleable>
+
+    <declare-styleable name="DragRefreshLayout">
+        <attr name="topViewId" format="reference"/>
+        <attr name="bottomViewId" format="reference"/>
+    </declare-styleable>
 </resources>

@@ -1,19 +1,31 @@
 package cn.okayj.axui.view;
 
-import android.annotation.TargetApi;
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.os.ParcelUuid;
+import android.content.res.TypedArray;
+import android.support.annotation.CallSuper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
+import android.widget.AbsListView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.okayj.axui.R;
 
 /**
  * Created by jack on 2017/2/6.
  */
 
 public abstract class DragRefreshLayout extends ViewGroup {
+    private static final String TAG = "DragRefreshLayout";
+
     private static final float DEFAULT_DRAG_RATE = 0.5f;
 
     private static final int MAX_OFFSET_ANIMATION_DURATION = 700;
@@ -25,12 +37,6 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
     private static final int VIEW_STATE_OFFSET_BOTTOM = -1;
 
-
-    /*private static final int STATE_IDLE = 0;
-    private static final int STATE_DRAGING_DOWN = 1;
-    private static final int STATE_REFRESHING_TOP = 2;
-    private static final int STATE_DRAGING_UP = -1;
-    private static final int STATE_REFRESHING_BOTTOM = -2;*/
 
     private MoveRecorder mMoveRecorder = new MoveRecorder();
 
@@ -51,53 +57,174 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
     private int mStopOffsetBottom;//底部刷新时停留的点距
 
-//    private int mState = STATE_IDLE;
+    private boolean mRefreshTopEnabled;
+
+    private boolean mRefreshBottomEnabled;
 
     private boolean mRefreshingTop;
 
     private boolean mRefreshingBottom;
 
-    private boolean mRefreshTopEnabled;
-
-    private boolean mRefreshBottomEnabled;
-
-    private boolean mDraging;
+    private boolean mDragging;
 
     private int mViewState = VIEW_STATE_HOME;
 
-    private Animation mTopRefreshAnimation;
+    private Interpolator mDecelerateInterpolator = new DecelerateInterpolator(2f);
 
-    private Animation mBottomRefreshAnimation;
+    private AnimatorMoveTargetObject mAnimatorMoveTargetObject = new AnimatorMoveTargetObject();
 
-    private Animation mToTopAnimation;
-
-    private Animation mToBottomAnimation;
+    private Animator mCurrentAnimator;
 
     private View mMainView;
 
     private View mTopView;
 
-    private View mBottonView;
+    private View mBottomView;
 
-    private RefreshListener mTopRefreshlistener;
+    private int mTopViewId;//find top view after inflated
 
-    private RefreshListener mBottomRefreshListener;
+    private int mBottomViewId;//find bottom view after inflated
+
+    private List<RefreshListener> mTopRefreshListeners = new ArrayList<>();
+
+    private List<RefreshListener> mBottomRefreshListeners = new ArrayList<>();
+
+    private RefreshListener mTopViewRefreshListener;
+
+    private RefreshListener mBottomViewRefreshListener;
 
     public DragRefreshLayout(Context context) {
-        super(context);
+        this(context,null);
     }
 
     public DragRefreshLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs,0);
     }
 
     public DragRefreshLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
+        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+
+        setWillNotDraw(true);
+
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.DragRefreshLayout);
+
+        mTopViewId = a.getResourceId(R.styleable.DragRefreshLayout_topViewId,0);
+
+        mBottomViewId = a.getResourceId(R.styleable.DragRefreshLayout_bottomViewId,0);
+
+        a.recycle();
     }
 
-    @TargetApi(21)
-    public DragRefreshLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+
+        int childToFind = getChildCount();
+        if(childToFind > 3){
+            throw new IllegalStateException(TAG + "'s child count should not more than 3");
+        }
+
+        if(mTopViewId != 0){
+            childToFind --;
+            mTopView = findViewById(mTopViewId);
+            if(mTopView == null)
+                throw new IllegalStateException("Could not find top view by id");
+        }
+
+        if(mBottomViewId != 0){
+            childToFind --;
+            mBottomView = findViewById(mBottomViewId);
+            if(mBottomView == null)
+                throw new IllegalStateException("Could not find bottom view by id");
+        }
+
+        if(childToFind == 1) {
+            for(int index = 0; index < getChildCount(); ++index){
+                View child = getChildAt(index);
+                if(child == mTopView || child == mBottomView)
+                    continue;
+                else {
+                    mMainView = child;
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int measuredWidth = getMeasuredWidth();
+        int measuredHeight = getMeasuredHeight();
+
+        if(mMainView != null){
+            mMainView.measure(MeasureSpec.makeMeasureSpec(measuredWidth,MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(measuredHeight,MeasureSpec.EXACTLY));
+        }
+
+        int childWidth,childHeight,childWidthMode,childheightMode;
+        for (int index = 0; index < getChildCount(); ++index){
+            View child = getChildAt(index);
+            if(child == mMainView)
+                continue;//measured;
+
+            LayoutParams layoutParams = child.getLayoutParams();
+            switch (layoutParams.width){
+                case LayoutParams.MATCH_PARENT:
+                    childWidth = measuredWidth;
+                    childWidthMode = MeasureSpec.EXACTLY;
+                    break;
+                case LayoutParams.WRAP_CONTENT:
+                    childWidth = measuredWidth;
+                    childWidthMode = MeasureSpec.AT_MOST;
+                    break;
+                default:
+                    childWidth = layoutParams.width;
+                    childWidthMode = MeasureSpec.EXACTLY;
+            }
+            switch (layoutParams.height){
+                case LayoutParams.MATCH_PARENT:
+                    childHeight = measuredHeight;
+                    childheightMode = MeasureSpec.EXACTLY;
+                    break;
+                case LayoutParams.WRAP_CONTENT:
+                    childHeight = measuredHeight;
+                    childheightMode = MeasureSpec.AT_MOST;
+                    break;
+                default:
+                    childHeight = layoutParams.height;
+                    childheightMode = MeasureSpec.EXACTLY;
+            }
+
+            child.measure(MeasureSpec.makeMeasureSpec(childWidth,childWidthMode),
+                    MeasureSpec.makeMeasureSpec(childHeight,childheightMode));
+
+            //计算刷新动画的停留高度
+            if(child == mTopView){
+                mStopOffsetTop = mTopView.getMeasuredHeight();
+            }else if(child == mBottomView){
+                mStopOffsetBottom = - mBottomView.getHeight();
+            }
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        int height = b - t;
+
+        if(mMainView != null){
+            mMainView.layout(0,mTotalOffset,mMainView.getMeasuredWidth(),mTotalOffset+mMainView.getMeasuredHeight());
+        }
+
+        if(mTopView != null){
+            mTopView.layout(0, - mTopView.getMeasuredHeight() + mTotalOffset,mTopView.getMeasuredWidth(),mTotalOffset);
+        }
+
+        if(mBottomView != null){
+            mBottomView.layout(0,height + mTotalOffset, mBottomView.getMeasuredWidth(), height + mTotalOffset + mBottomView.getMeasuredHeight());
+        }
     }
 
     @Override
@@ -147,12 +274,12 @@ public abstract class DragRefreshLayout extends ViewGroup {
         }
 
 
-        if (!mDraging) {
+        if (!mDragging) {
             mPreTotalOffset = mTotalOffset;
             //start dragging and stop any animation
             stopAnimation();
             mMoveRecorder.newStartPoint(event);
-            mDraging = true;
+            mDragging = true;
             return true;
         }
 
@@ -181,7 +308,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
             //---------------------
             case MotionEvent.ACTION_UP:
                 mMoveRecorder.reset();
-                mDraging = false;
+                mDragging = false;
                 onDragEnd(true);
                 break;
             //--------------------------
@@ -189,7 +316,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
             //--------------------------
             case MotionEvent.ACTION_CANCEL:
                 mMoveRecorder.reset();
-                mDraging = false;
+                mDragging = false;
                 onDragEnd(false);
                 break;
             //-------------------------
@@ -219,32 +346,84 @@ public abstract class DragRefreshLayout extends ViewGroup {
     }
 
     protected boolean canChildScroll(int upOrDown) {
-        // TODO: 2017/2/21
-        return false;
+        if (android.os.Build.VERSION.SDK_INT < 14) {
+            if (mMainView instanceof AbsListView) {
+                final AbsListView absListView = (AbsListView) mMainView;
+
+                if (upOrDown > 0) {
+                    return absListView.getChildCount() > 0
+                            && (absListView.getFirstVisiblePosition() > 0 || absListView.getChildAt(0)
+                            .getTop() < absListView.getPaddingTop());
+                } else {
+                    final int lastVisiblePosition, lastItemPosition, childCount;
+                    childCount = absListView.getChildCount();
+                    if (childCount == 0)
+                        return false;
+
+                    lastVisiblePosition = absListView.getLastVisiblePosition();
+                    lastItemPosition = absListView.getCount() - 1;
+                    if (lastVisiblePosition < lastItemPosition)
+                        return true;
+                    else {
+                        return absListView.getChildAt(absListView.getChildCount() - 1).getBottom() > (absListView.getHeight() - absListView.getPaddingBottom());
+                    }
+                }
+            } else {
+                return mMainView.canScrollVertically(upOrDown);
+            }
+        } else {
+            return mMainView.canScrollVertically(upOrDown);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        reset();
     }
 
     private void startRefreshTopAnimation() {
-        // TODO: 2017/2/21
+        stopAnimation();
+
+        mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetTop);
+        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.start();
     }
 
     private void startRefreshBottomAnimation() {
-        // TODO: 2017/2/21
+        stopAnimation();
+
+        mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetBottom);
+        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.start();
     }
 
     private void startToTopAnimation() {
-        // TODO: 2017/2/21
+        stopAnimation();
+
+        mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
+        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.start();
     }
 
     private void startToBottomAnimation() {
-        // TODO: 2017/2/21
+        stopAnimation();
+
+        mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
+        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.start();
     }
 
     private void stopAnimation() {
-        // TODO: 2017/2/21
+        if (mCurrentAnimator != null && mCurrentAnimator.isRunning()) {
+            mCurrentAnimator.cancel();
+            mCurrentAnimator = null;
+        }
     }
 
     /**
      * 拖拽事件结束，运行动画，根据视图状态判断是否触发刷新。
+     *
      * @param tryTriggerRefresh
      */
     private void onDragEnd(boolean tryTriggerRefresh) {
@@ -253,9 +432,9 @@ public abstract class DragRefreshLayout extends ViewGroup {
                 if (mRefreshingTop) {
                     startRefreshTopAnimation();
                 } else {
-                    if(mRefreshTopEnabled && tryTriggerRefresh) {
+                    if (mRefreshTopEnabled && tryTriggerRefresh) {
                         refreshTop(true);
-                    }else {
+                    } else {
                         startToTopAnimation();
                     }
                 }
@@ -263,17 +442,17 @@ public abstract class DragRefreshLayout extends ViewGroup {
                 startToTopAnimation();
             }
         } else if (mTotalOffset < 0) {
-            if(mTotalOffset <= mStopOffsetBottom) {
-                if(mRefreshingBottom) {
+            if (mTotalOffset <= mStopOffsetBottom) {
+                if (mRefreshingBottom) {
                     startRefreshBottomAnimation();
                 } else {
-                    if(mRefreshBottomEnabled && tryTriggerRefresh){
+                    if (mRefreshBottomEnabled && tryTriggerRefresh) {
                         refreshBottom(true);
-                    }else {
+                    } else {
                         startToBottomAnimation();
                     }
                 }
-            }else {
+            } else {
                 startToBottomAnimation();
             }
         }
@@ -291,8 +470,8 @@ public abstract class DragRefreshLayout extends ViewGroup {
             mTopView.offsetTopAndBottom(distance);
         }
 
-        if (mBottonView != null) {
-            mBottonView.offsetTopAndBottom(distance);
+        if (mBottomView != null) {
+            mBottomView.offsetTopAndBottom(distance);
         }
 
 
@@ -312,7 +491,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
                     mInternalTopRefreshListener.onMoved(mTotalOffset, movePercent);
                 } else {
                     mViewState = VIEW_STATE_OFFSET_BOTTOM;
-                    mInternalBottomRefreshListerner.onMoved(mTotalOffset, movePercent);
+                    mInternalBottomRefreshListener.onMoved(mTotalOffset, movePercent);
                 }
                 break;
             case VIEW_STATE_OFFSET_TOP:
@@ -328,12 +507,12 @@ public abstract class DragRefreshLayout extends ViewGroup {
             case VIEW_STATE_OFFSET_BOTTOM:
                 if (mTotalOffset == 0) {
                     mViewState = VIEW_STATE_HOME;
-                    mInternalBottomRefreshListerner.onMoved(0, 0);
+                    mInternalBottomRefreshListener.onMoved(0, 0);
                     break;
                 }
 
                 movePercent = ((float) mTotalOffset) / mStopOffsetBottom;
-                mInternalBottomRefreshListerner.onMoved(mTotalOffset, movePercent);
+                mInternalBottomRefreshListener.onMoved(mTotalOffset, movePercent);
                 break;
         }
 
@@ -349,10 +528,10 @@ public abstract class DragRefreshLayout extends ViewGroup {
             startRefreshTopAnimation();
             mInternalTopRefreshListener.onRefresh();
         } else {
-            if (mDraging) {
+            if (mDragging) {
                 return;
             } else {
-                mInternalBottomRefreshListerner.onEndRefresh();
+                mInternalBottomRefreshListener.onEndRefresh();
 
                 if (mTotalOffset > 0) {
                     startToTopAnimation();
@@ -361,6 +540,60 @@ public abstract class DragRefreshLayout extends ViewGroup {
                 }
             }
         }
+    }
+
+    @CallSuper
+    public void setTopView(View view) {
+        if(mTopView == view)
+            return;
+
+        removeView(mTopView);
+        mTopView = view;
+        addView(mTopView);
+
+        if(mTopViewRefreshListener != null){
+            mTopViewRefreshListener = null;
+        }
+
+        mTopView = view;
+        if(mTopView instanceof RefreshListener){
+            mTopViewRefreshListener = (RefreshListener) mTopView;
+        }
+    }
+
+    @CallSuper
+    public void setBottomView(View view) {
+        if(mBottomView == view)
+            return;
+
+        removeView(mBottomView);
+        mBottomView = view;
+        addView(mBottomView);
+
+        if(mBottomViewRefreshListener != null){
+            mBottomViewRefreshListener = null;
+        }
+
+        if(mBottomView instanceof RefreshListener){
+            mBottomViewRefreshListener = (RefreshListener) mBottomView;
+        }
+    }
+
+    public void setMainView(View view) {
+        if(mMainView == view)
+            return;
+
+        removeView(mMainView);
+        mMainView = view;
+        addView(mMainView);
+    }
+
+    public void setTopRefreshEnable(boolean enabled){
+        mRefreshTopEnabled = enabled;
+    }
+
+    public void setBottomRefreshEnable(boolean enable){
+        mRefreshBottomEnabled = enable;
     }
 
     public void refreshBottom(boolean refresh) {
@@ -371,11 +604,11 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
         if (refresh) {
             startRefreshBottomAnimation();
-            mInternalBottomRefreshListerner.onRefresh();
+            mInternalBottomRefreshListener.onRefresh();
         } else {
-            mInternalBottomRefreshListerner.onEndRefresh();
+            mInternalBottomRefreshListener.onEndRefresh();
 
-            if (mDraging) {
+            if (mDragging) {
                 return;
             } else {
                 if (mTotalOffset > 0) {
@@ -387,42 +620,57 @@ public abstract class DragRefreshLayout extends ViewGroup {
         }
     }
 
+    public void reset(){
+        mPreTotalOffset = 0;
+        mTotalOffset = 0;
+        mRefreshingTop = false;
+        mRefreshingBottom = false;
+        stopAnimation();
+    }
+
     private RefreshListener mInternalTopRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            // TODO: 2017/2/25
+            for(RefreshListener listener : mTopRefreshListeners){
+                listener.onRefresh();
+            }
         }
 
         @Override
         public void onEndRefresh() {
-            // TODO: 2017/2/25
-
+            for(RefreshListener listener : mTopRefreshListeners){
+                listener.onEndRefresh();
+            }
         }
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            // TODO: 2017/2/25
-
+            for(RefreshListener listener : mTopRefreshListeners){
+                listener.onMoved(currentOffset,percent);
+            }
         }
     };
 
-    private RefreshListener mInternalBottomRefreshListerner = new RefreshListener() {
+    private RefreshListener mInternalBottomRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            // TODO: 2017/2/25
-
+            for(RefreshListener listener : mBottomRefreshListeners){
+                listener.onRefresh();
+            }
         }
 
         @Override
         public void onEndRefresh() {
-            // TODO: 2017/2/25
-
+            for(RefreshListener listener : mBottomRefreshListeners){
+                listener.onEndRefresh();
+            }
         }
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            // TODO: 2017/2/25
-
+            for(RefreshListener listener : mBottomRefreshListeners){
+                listener.onMoved(currentOffset, percent);
+            }
         }
     };
 
@@ -432,5 +680,16 @@ public abstract class DragRefreshLayout extends ViewGroup {
         void onEndRefresh();
 
         void onMoved(int currentOffset, float percent);
+    }
+
+    private class AnimatorMoveTargetObject {
+        public int getTotalOffset() {
+            return mTotalOffset;
+        }
+
+        public void setTotalOffset(int totalOffset) {
+            mTotalOffset = totalOffset;
+            move();
+        }
     }
 }
