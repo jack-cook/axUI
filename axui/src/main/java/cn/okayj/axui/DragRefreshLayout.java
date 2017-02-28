@@ -696,6 +696,34 @@ public class DragRefreshLayout extends ViewGroup {
         stopAnimation();
     }
 
+    public void addTopRefreshListener(RefreshListener refreshListener) {
+        if(refreshListener == null || mTopRefreshListeners.contains(refreshListener))
+            return;
+
+        mTopRefreshListeners.add(refreshListener);
+    }
+
+    public void addBottomRefreshListener(RefreshListener refreshListener) {
+        if(refreshListener == null || mBottomRefreshListeners.contains(refreshListener))
+            return;
+
+        mBottomRefreshListeners.add(refreshListener);
+    }
+
+    public void removeTopRefreshListener(RefreshListener refreshListener) {
+        if(refreshListener == null)
+            return;
+
+        mTopRefreshListeners.remove(refreshListener);
+    }
+
+    public void removeBottomRefreshListener(RefreshListener refreshListener) {
+        if(refreshListener == null)
+            return;
+
+        mBottomRefreshListeners.remove(refreshListener);
+    }
+
     private RefreshListener mInternalTopRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
