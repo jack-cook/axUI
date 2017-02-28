@@ -99,6 +99,8 @@ public class DragRefreshLayout extends ViewGroup {
 
     private RefreshListener mBottomViewRefreshListener;
 
+    private OnChildScrollCallback mOnChildScrollCallback;
+
     public DragRefreshLayout(Context context) {
         this(context, null);
     }
@@ -367,6 +369,14 @@ public class DragRefreshLayout extends ViewGroup {
     }
 
     protected boolean canChildScroll(int upOrDown) {
+        if(mMainView == null){
+            return false;
+        }
+
+        if(mOnChildScrollCallback != null){
+            return mOnChildScrollCallback.canChildScroll(this,mMainView,upOrDown);
+        }
+
         if (android.os.Build.VERSION.SDK_INT < 14) {
             if (mMainView instanceof AbsListView) {
                 final AbsListView absListView = (AbsListView) mMainView;
@@ -658,6 +668,10 @@ public class DragRefreshLayout extends ViewGroup {
         }
     }
 
+    public void setOnChildScrollCallback(OnChildScrollCallback onChildScrollCallback) {
+        this.mOnChildScrollCallback = onChildScrollCallback;
+    }
+
     public void reset() {
         mPreTotalOffset = 0;
         mTotalOffset = 0;
@@ -718,6 +732,10 @@ public class DragRefreshLayout extends ViewGroup {
         void onEndRefresh();
 
         void onMoved(int currentOffset, float percent);
+    }
+
+    public interface OnChildScrollCallback {
+        boolean canChildScroll(DragRefreshLayout parent, View mainView, int direction);
     }
 
     private class AnimatorMoveTargetObject {
