@@ -30,7 +30,7 @@ public class DragRefreshLayout extends ViewGroup {
 
     private static final float DEFAULT_DRAG_RATE = 0.5f;
 
-    private static final int MAX_OFFSET_ANIMATION_DURATION = 700;
+    private static final int MAX_OFFSET_ANIMATION_DURATION = 300;
 
 
     private static final int VIEW_STATE_OFFSET_TOP = 1;
@@ -145,7 +145,7 @@ public class DragRefreshLayout extends ViewGroup {
 
             mTopView = child;
             mRefreshTopEnabled = true;
-            if(mTopView instanceof RefreshListener){
+            if (mTopView instanceof RefreshListener) {
                 mTopViewRefreshListener = (RefreshListener) mTopView;
             }
         }
@@ -158,7 +158,7 @@ public class DragRefreshLayout extends ViewGroup {
 
             mBottomView = child;
             mRefreshBottomEnabled = true;
-            if(mBottomView instanceof RefreshListener) {
+            if (mBottomView instanceof RefreshListener) {
                 mBottomViewRefreshListener = (RefreshListener) mBottomView;
             }
         }
@@ -371,12 +371,12 @@ public class DragRefreshLayout extends ViewGroup {
     }
 
     protected boolean canChildScroll(int upOrDown) {
-        if(mMainView == null){
+        if (mMainView == null) {
             return false;
         }
 
-        if(mOnChildScrollCallback != null){
-            return mOnChildScrollCallback.canChildScroll(this,mMainView,upOrDown);
+        if (mOnChildScrollCallback != null) {
+            return mOnChildScrollCallback.canChildScroll(this, mMainView, upOrDown);
         }
 
         if (android.os.Build.VERSION.SDK_INT < 14) {
@@ -418,32 +418,44 @@ public class DragRefreshLayout extends ViewGroup {
     private void startRefreshTopAnimation() {
         stopAnimation();
 
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * (Math.abs(mTotalOffset - mStopOffsetTop) / (float) mStopOffsetTop));
+        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+            duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetTop);
-        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.setDuration(duration);
         mCurrentAnimator.start();
     }
 
     private void startRefreshBottomAnimation() {
         stopAnimation();
 
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs((mTotalOffset - mStopOffsetBottom) / (float) mStopOffsetBottom));
+        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+            duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetBottom);
-        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.setDuration(duration);
         mCurrentAnimator.start();
     }
 
     private void startToTopAnimation() {
         stopAnimation();
 
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float)mTotalOffset )/ mStopOffsetTop));
+        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+            duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
-        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.setDuration(duration);
         mCurrentAnimator.start();
     }
 
     private void startToBottomAnimation() {
         stopAnimation();
 
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float)mTotalOffset )/ mStopOffsetBottom));
+        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+            duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
-        mCurrentAnimator.setDuration(MAX_OFFSET_ANIMATION_DURATION);
+        mCurrentAnimator.setDuration(duration);
         mCurrentAnimator.start();
     }
 
@@ -497,7 +509,7 @@ public class DragRefreshLayout extends ViewGroup {
     private void move() {
         int distance = mTotalOffset - mLayoutOffset;
 
-        if(mMainView != null) {
+        if (mMainView != null) {
             mMainView.offsetTopAndBottom(distance);
         }
 
@@ -581,6 +593,7 @@ public class DragRefreshLayout extends ViewGroup {
 
     /**
      * this will auto enable refresh top feature
+     *
      * @param view
      */
     @CallSuper
@@ -606,6 +619,7 @@ public class DragRefreshLayout extends ViewGroup {
 
     /**
      * this will auto enable refresh bottom feature
+     *
      * @param view
      */
     @CallSuper
@@ -685,7 +699,7 @@ public class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalTopRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            if(mTopViewRefreshListener != null){
+            if (mTopViewRefreshListener != null) {
                 mTopViewRefreshListener.onRefresh();
             }
 
@@ -696,7 +710,7 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onEndRefresh() {
-            if(mTopViewRefreshListener != null){
+            if (mTopViewRefreshListener != null) {
                 mTopViewRefreshListener.onEndRefresh();
             }
 
@@ -707,7 +721,7 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            if(mTopViewRefreshListener != null){
+            if (mTopViewRefreshListener != null) {
                 mTopViewRefreshListener.onMoved(currentOffset, percent);
             }
 
@@ -720,7 +734,7 @@ public class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalBottomRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            if(mBottomViewRefreshListener != null){
+            if (mBottomViewRefreshListener != null) {
                 mBottomViewRefreshListener.onRefresh();
             }
 
@@ -731,7 +745,7 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onEndRefresh() {
-            if(mBottomViewRefreshListener != null){
+            if (mBottomViewRefreshListener != null) {
                 mBottomViewRefreshListener.onEndRefresh();
             }
 
@@ -742,7 +756,7 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            if(mBottomViewRefreshListener != null){
+            if (mBottomViewRefreshListener != null) {
                 mBottomViewRefreshListener.onMoved(currentOffset, percent);
             }
 
