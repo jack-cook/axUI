@@ -135,6 +135,9 @@ public class DragRefreshLayout extends ViewGroup {
 
             mTopView = child;
             mRefreshTopEnabled = true;
+            if(mTopView instanceof RefreshListener){
+                mTopViewRefreshListener = (RefreshListener) mTopView;
+            }
         }
 
         if (mBottomViewId != 0) {
@@ -145,8 +148,9 @@ public class DragRefreshLayout extends ViewGroup {
 
             mBottomView = child;
             mRefreshBottomEnabled = true;
-
-            setBottomView(child);
+            if(mBottomView instanceof RefreshListener) {
+                mBottomViewRefreshListener = (RefreshListener) mBottomView;
+            }
         }
 
         if (childToFind == 1) {
@@ -552,6 +556,10 @@ public class DragRefreshLayout extends ViewGroup {
         }
     }
 
+    /**
+     * this will auto enable refresh top feature
+     * @param view
+     */
     @CallSuper
     public void setTopView(View view) {
         if (mTopView == view)
@@ -561,30 +569,22 @@ public class DragRefreshLayout extends ViewGroup {
             removeView(mTopView);
 
         mTopView = view;
+        mTopViewRefreshListener = null;
 
-        if (mTopView != null)
+        if (mTopView != null) {
             addView(mTopView);
+            mRefreshTopEnabled = true;
 
-        if (mTopViewRefreshListener != null) {
-            mTopViewRefreshListener = null;
-        }
-
-        mTopView = view;
-        if (mTopView instanceof RefreshListener) {
-            mTopViewRefreshListener = (RefreshListener) mTopView;
+            if (mTopView instanceof RefreshListener) {
+                mTopViewRefreshListener = (RefreshListener) mTopView;
+            }
         }
     }
 
-    /*private void resetTopView(View view) {
-        mTopViewRefreshListener = null;
-        if (mTopView instanceof RefreshListener) {
-            mTopViewRefreshListener = (RefreshListener) mTopView;
-        }
-        if(mTopView != null){
-            mRefreshTopEnabled = true;
-        }
-    }*/
-
+    /**
+     * this will auto enable refresh bottom feature
+     * @param view
+     */
     @CallSuper
     public void setBottomView(View view) {
         if (mBottomView == view)
@@ -594,16 +594,15 @@ public class DragRefreshLayout extends ViewGroup {
             removeView(mBottomView);
 
         mBottomView = view;
+        mBottomViewRefreshListener = null;
 
-        if (mBottomView != null)
+        if (mBottomView != null) {
             addView(mBottomView);
+            mRefreshBottomEnabled = true;
 
-        if (mBottomViewRefreshListener != null) {
-            mBottomViewRefreshListener = null;
-        }
-
-        if (mBottomView instanceof RefreshListener) {
-            mBottomViewRefreshListener = (RefreshListener) mBottomView;
+            if (mBottomView instanceof RefreshListener) {
+                mBottomViewRefreshListener = (RefreshListener) mBottomView;
+            }
         }
     }
 
