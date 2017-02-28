@@ -23,7 +23,7 @@ import cn.okayj.axui.R;
  * Created by jack on 2017/2/6.
  */
 
-public abstract class DragRefreshLayout extends ViewGroup {
+public class DragRefreshLayout extends ViewGroup {
     private static final String TAG = "DragRefreshLayout";
 
     private static final float DEFAULT_DRAG_RATE = 0.5f;
@@ -94,11 +94,11 @@ public abstract class DragRefreshLayout extends ViewGroup {
     private RefreshListener mBottomViewRefreshListener;
 
     public DragRefreshLayout(Context context) {
-        this(context,null);
+        this(context, null);
     }
 
     public DragRefreshLayout(Context context, AttributeSet attrs) {
-        this(context, attrs,0);
+        this(context, attrs, 0);
     }
 
     public DragRefreshLayout(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -110,9 +110,9 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.DragRefreshLayout);
 
-        mTopViewId = a.getResourceId(R.styleable.DragRefreshLayout_topViewId,0);
+        mTopViewId = a.getResourceId(R.styleable.DragRefreshLayout_topViewId, 0);
 
-        mBottomViewId = a.getResourceId(R.styleable.DragRefreshLayout_bottomViewId,0);
+        mBottomViewId = a.getResourceId(R.styleable.DragRefreshLayout_bottomViewId, 0);
 
         a.recycle();
     }
@@ -122,28 +122,37 @@ public abstract class DragRefreshLayout extends ViewGroup {
         super.onFinishInflate();
 
         int childToFind = getChildCount();
-        if(childToFind > 3){
+        if (childToFind > 3) {
             throw new IllegalStateException(TAG + "'s child count should not more than 3");
         }
 
-        if(mTopViewId != 0){
-            childToFind --;
-            mTopView = findViewById(mTopViewId);
-            if(mTopView == null)
+        View child;
+        if (mTopViewId != 0) {
+            childToFind--;
+            child = findViewById(mTopViewId);
+            if (child == null)
                 throw new IllegalStateException("Could not find top view by id");
+
+            mTopView = child;
+            mRefreshTopEnabled = true;
         }
 
-        if(mBottomViewId != 0){
-            childToFind --;
-            mBottomView = findViewById(mBottomViewId);
-            if(mBottomView == null)
+        if (mBottomViewId != 0) {
+            childToFind--;
+            child = findViewById(mBottomViewId);
+            if (child == null)
                 throw new IllegalStateException("Could not find bottom view by id");
+
+            mBottomView = child;
+            mRefreshBottomEnabled = true;
+
+            setBottomView(child);
         }
 
-        if(childToFind == 1) {
-            for(int index = 0; index < getChildCount(); ++index){
-                View child = getChildAt(index);
-                if(child == mTopView || child == mBottomView)
+        if (childToFind == 1) {
+            for (int index = 0; index < getChildCount(); ++index) {
+                child = getChildAt(index);
+                if (child == mTopView || child == mBottomView)
                     continue;
                 else {
                     mMainView = child;
@@ -159,19 +168,19 @@ public abstract class DragRefreshLayout extends ViewGroup {
         int measuredWidth = getMeasuredWidth();
         int measuredHeight = getMeasuredHeight();
 
-        if(mMainView != null){
-            mMainView.measure(MeasureSpec.makeMeasureSpec(measuredWidth,MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(measuredHeight,MeasureSpec.EXACTLY));
+        if (mMainView != null) {
+            mMainView.measure(MeasureSpec.makeMeasureSpec(measuredWidth, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(measuredHeight, MeasureSpec.EXACTLY));
         }
 
-        int childWidth,childHeight,childWidthMode,childheightMode;
-        for (int index = 0; index < getChildCount(); ++index){
+        int childWidth, childHeight, childWidthMode, childheightMode;
+        for (int index = 0; index < getChildCount(); ++index) {
             View child = getChildAt(index);
-            if(child == mMainView)
+            if (child == mMainView)
                 continue;//measured;
 
             LayoutParams layoutParams = child.getLayoutParams();
-            switch (layoutParams.width){
+            switch (layoutParams.width) {
                 case LayoutParams.MATCH_PARENT:
                     childWidth = measuredWidth;
                     childWidthMode = MeasureSpec.EXACTLY;
@@ -184,7 +193,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
                     childWidth = layoutParams.width;
                     childWidthMode = MeasureSpec.EXACTLY;
             }
-            switch (layoutParams.height){
+            switch (layoutParams.height) {
                 case LayoutParams.MATCH_PARENT:
                     childHeight = measuredHeight;
                     childheightMode = MeasureSpec.EXACTLY;
@@ -198,14 +207,14 @@ public abstract class DragRefreshLayout extends ViewGroup {
                     childheightMode = MeasureSpec.EXACTLY;
             }
 
-            child.measure(MeasureSpec.makeMeasureSpec(childWidth,childWidthMode),
-                    MeasureSpec.makeMeasureSpec(childHeight,childheightMode));
+            child.measure(MeasureSpec.makeMeasureSpec(childWidth, childWidthMode),
+                    MeasureSpec.makeMeasureSpec(childHeight, childheightMode));
 
             //计算刷新动画的停留高度
-            if(child == mTopView){
+            if (child == mTopView) {
                 mStopOffsetTop = mTopView.getMeasuredHeight();
-            }else if(child == mBottomView){
-                mStopOffsetBottom = - mBottomView.getHeight();
+            } else if (child == mBottomView) {
+                mStopOffsetBottom = -mBottomView.getHeight();
             }
         }
     }
@@ -214,16 +223,16 @@ public abstract class DragRefreshLayout extends ViewGroup {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int height = b - t;
 
-        if(mMainView != null){
-            mMainView.layout(0,mTotalOffset,mMainView.getMeasuredWidth(),mTotalOffset+mMainView.getMeasuredHeight());
+        if (mMainView != null) {
+            mMainView.layout(0, mTotalOffset, mMainView.getMeasuredWidth(), mTotalOffset + mMainView.getMeasuredHeight());
         }
 
-        if(mTopView != null){
-            mTopView.layout(0, - mTopView.getMeasuredHeight() + mTotalOffset,mTopView.getMeasuredWidth(),mTotalOffset);
+        if (mTopView != null) {
+            mTopView.layout(0, -mTopView.getMeasuredHeight() + mTotalOffset, mTopView.getMeasuredWidth(), mTotalOffset);
         }
 
-        if(mBottomView != null){
-            mBottomView.layout(0,height + mTotalOffset, mBottomView.getMeasuredWidth(), height + mTotalOffset + mBottomView.getMeasuredHeight());
+        if (mBottomView != null) {
+            mBottomView.layout(0, height + mTotalOffset, mBottomView.getMeasuredWidth(), height + mTotalOffset + mBottomView.getMeasuredHeight());
         }
     }
 
@@ -465,6 +474,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
         int currentTop = mMainView.getTop();
         int distance = mTotalOffset - currentTop;
+
         mMainView.offsetTopAndBottom(distance);
         if (mTopView != null) {
             mTopView.offsetTopAndBottom(distance);
@@ -544,43 +554,61 @@ public abstract class DragRefreshLayout extends ViewGroup {
 
     @CallSuper
     public void setTopView(View view) {
-        if(mTopView == view)
+        if (mTopView == view)
             return;
 
-        removeView(mTopView);
-        mTopView = view;
-        addView(mTopView);
+        if (mTopView != null)
+            removeView(mTopView);
 
-        if(mTopViewRefreshListener != null){
+        mTopView = view;
+
+        if (mTopView != null)
+            addView(mTopView);
+
+        if (mTopViewRefreshListener != null) {
             mTopViewRefreshListener = null;
         }
 
         mTopView = view;
-        if(mTopView instanceof RefreshListener){
+        if (mTopView instanceof RefreshListener) {
             mTopViewRefreshListener = (RefreshListener) mTopView;
         }
     }
 
+    /*private void resetTopView(View view) {
+        mTopViewRefreshListener = null;
+        if (mTopView instanceof RefreshListener) {
+            mTopViewRefreshListener = (RefreshListener) mTopView;
+        }
+        if(mTopView != null){
+            mRefreshTopEnabled = true;
+        }
+    }*/
+
     @CallSuper
     public void setBottomView(View view) {
-        if(mBottomView == view)
+        if (mBottomView == view)
             return;
 
-        removeView(mBottomView);
-        mBottomView = view;
-        addView(mBottomView);
+        if (mBottomView != null)
+            removeView(mBottomView);
 
-        if(mBottomViewRefreshListener != null){
+        mBottomView = view;
+
+        if (mBottomView != null)
+            addView(mBottomView);
+
+        if (mBottomViewRefreshListener != null) {
             mBottomViewRefreshListener = null;
         }
 
-        if(mBottomView instanceof RefreshListener){
+        if (mBottomView instanceof RefreshListener) {
             mBottomViewRefreshListener = (RefreshListener) mBottomView;
         }
     }
 
     public void setMainView(View view) {
-        if(mMainView == view)
+        if (mMainView == view)
             return;
 
         removeView(mMainView);
@@ -588,11 +616,11 @@ public abstract class DragRefreshLayout extends ViewGroup {
         addView(mMainView);
     }
 
-    public void setTopRefreshEnable(boolean enabled){
+    public void setTopRefreshEnable(boolean enabled) {
         mRefreshTopEnabled = enabled;
     }
 
-    public void setBottomRefreshEnable(boolean enable){
+    public void setBottomRefreshEnable(boolean enable) {
         mRefreshBottomEnabled = enable;
     }
 
@@ -620,7 +648,7 @@ public abstract class DragRefreshLayout extends ViewGroup {
         }
     }
 
-    public void reset(){
+    public void reset() {
         mPreTotalOffset = 0;
         mTotalOffset = 0;
         mRefreshingTop = false;
@@ -631,22 +659,22 @@ public abstract class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalTopRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            for(RefreshListener listener : mTopRefreshListeners){
+            for (RefreshListener listener : mTopRefreshListeners) {
                 listener.onRefresh();
             }
         }
 
         @Override
         public void onEndRefresh() {
-            for(RefreshListener listener : mTopRefreshListeners){
+            for (RefreshListener listener : mTopRefreshListeners) {
                 listener.onEndRefresh();
             }
         }
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            for(RefreshListener listener : mTopRefreshListeners){
-                listener.onMoved(currentOffset,percent);
+            for (RefreshListener listener : mTopRefreshListeners) {
+                listener.onMoved(currentOffset, percent);
             }
         }
     };
@@ -654,21 +682,21 @@ public abstract class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalBottomRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
-            for(RefreshListener listener : mBottomRefreshListeners){
+            for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onRefresh();
             }
         }
 
         @Override
         public void onEndRefresh() {
-            for(RefreshListener listener : mBottomRefreshListeners){
+            for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onEndRefresh();
             }
         }
 
         @Override
         public void onMoved(int currentOffset, float percent) {
-            for(RefreshListener listener : mBottomRefreshListeners){
+            for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onMoved(currentOffset, percent);
             }
         }
