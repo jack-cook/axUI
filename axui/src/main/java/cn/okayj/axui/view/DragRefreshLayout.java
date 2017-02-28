@@ -21,6 +21,8 @@ import cn.okayj.axui.R;
 
 /**
  * Created by jack on 2017/2/6.
+ * 需要使用{@link #setMainView(View)},{@link #setTopView(View)},{@link #setBottomView(View)}设置视图。
+ * 请不要直接调用{@link #addView(View)}!!!!!
  */
 
 public class DragRefreshLayout extends ViewGroup {
