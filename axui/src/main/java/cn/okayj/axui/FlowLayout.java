@@ -16,7 +16,9 @@ import java.util.List;
 
 /**
  * Created by huangkaijie on 16/8/20.
+ * 性能未测试
  */
+@Deprecated
 public class FlowLayout extends ViewGroup {
     @IntDef({HORIZONTAL,VERTICAL})
     public @interface OrientationMode{}
