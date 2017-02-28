@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<cn.okayj.axui.view.DragRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<cn.okayj.axui.DragRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,4 +26,4 @@
         android:background="@color/colorPrimary"
         />
 
-</cn.okayj.axui.view.DragRefreshLayout>
+</cn.okayj.axui.DragRefreshLayout>

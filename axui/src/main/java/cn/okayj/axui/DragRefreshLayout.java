@@ -1,4 +1,4 @@
-package cn.okayj.axui.view;
+package cn.okayj.axui;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
@@ -17,7 +17,7 @@ import android.widget.AbsListView;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.okayj.axui.R;
+import cn.okayj.axui.view.MoveRecorder;
 
 /**
  * Created by jack on 2017/2/6.
