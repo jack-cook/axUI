@@ -685,6 +685,10 @@ public class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalTopRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
+            if(mTopViewRefreshListener != null){
+                mTopViewRefreshListener.onRefresh();
+            }
+
             for (RefreshListener listener : mTopRefreshListeners) {
                 listener.onRefresh();
             }
@@ -692,6 +696,10 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onEndRefresh() {
+            if(mTopViewRefreshListener != null){
+                mTopViewRefreshListener.onEndRefresh();
+            }
+
             for (RefreshListener listener : mTopRefreshListeners) {
                 listener.onEndRefresh();
             }
@@ -699,6 +707,10 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onMoved(int currentOffset, float percent) {
+            if(mTopViewRefreshListener != null){
+                mTopViewRefreshListener.onMoved(currentOffset, percent);
+            }
+
             for (RefreshListener listener : mTopRefreshListeners) {
                 listener.onMoved(currentOffset, percent);
             }
@@ -708,6 +720,10 @@ public class DragRefreshLayout extends ViewGroup {
     private RefreshListener mInternalBottomRefreshListener = new RefreshListener() {
         @Override
         public void onRefresh() {
+            if(mBottomViewRefreshListener != null){
+                mBottomViewRefreshListener.onRefresh();
+            }
+
             for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onRefresh();
             }
@@ -715,6 +731,10 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onEndRefresh() {
+            if(mBottomViewRefreshListener != null){
+                mBottomViewRefreshListener.onEndRefresh();
+            }
+
             for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onEndRefresh();
             }
@@ -722,6 +742,10 @@ public class DragRefreshLayout extends ViewGroup {
 
         @Override
         public void onMoved(int currentOffset, float percent) {
+            if(mBottomViewRefreshListener != null){
+                mBottomViewRefreshListener.onMoved(currentOffset, percent);
+            }
+
             for (RefreshListener listener : mBottomRefreshListeners) {
                 listener.onMoved(currentOffset, percent);
             }
