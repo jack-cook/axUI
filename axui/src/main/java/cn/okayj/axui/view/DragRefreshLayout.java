@@ -42,14 +42,20 @@ public class DragRefreshLayout extends ViewGroup {
 
     private float mDragRate = DEFAULT_DRAG_RATE;
 
-    private float mCurrentTouchOffset = 0f;//点差距
-
     /**
-     * 当有触摸事件时，控件可能并不处于初始状态，需要累计距离作为总偏移
+     * 当有触摸事件时，控件可能并不处于初始状态，可能已经有偏移，需要累计距离作为总偏移
      */
     private int mPreTotalOffset = 0;
 
+    /**
+     * 该offset是最终的offset，为 {@link #mPreTotalOffset} 加上此次触摸产生的偏移量
+     */
     private int mTotalOffset = 0;
+
+    /**
+     * {@link #mTotalOffset} 为确定的偏移，但是视图绘制未必即时反应该偏移，所以需要该变量表示视图实际上的偏移，以计算到目的偏移的距离，方便{@link #move()} 操作
+     */
+    private int mLayoutOffset;
 
     private int mTouchSlop;
 
@@ -227,16 +233,18 @@ public class DragRefreshLayout extends ViewGroup {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int height = b - t;
 
+        mLayoutOffset = mTotalOffset;
+
         if (mMainView != null) {
-            mMainView.layout(0, mTotalOffset, mMainView.getMeasuredWidth(), mTotalOffset + mMainView.getMeasuredHeight());
+            mMainView.layout(0, mLayoutOffset, mMainView.getMeasuredWidth(), mLayoutOffset + mMainView.getMeasuredHeight());
         }
 
         if (mTopView != null) {
-            mTopView.layout(0, -mTopView.getMeasuredHeight() + mTotalOffset, mTopView.getMeasuredWidth(), mTotalOffset);
+            mTopView.layout(0, -mTopView.getMeasuredHeight() + mLayoutOffset, mTopView.getMeasuredWidth(), mLayoutOffset);
         }
 
         if (mBottomView != null) {
-            mBottomView.layout(0, height + mTotalOffset, mBottomView.getMeasuredWidth(), height + mTotalOffset + mBottomView.getMeasuredHeight());
+            mBottomView.layout(0, height + mLayoutOffset, mBottomView.getMeasuredWidth(), height + mLayoutOffset + mBottomView.getMeasuredHeight());
         }
     }
 
@@ -336,8 +344,8 @@ public class DragRefreshLayout extends ViewGroup {
             //移动事件，移动视图
             //-------------------------
             case MotionEvent.ACTION_MOVE:
-                mCurrentTouchOffset = (int) (deltaY * mDragRate);
-                mTotalOffset = mPreTotalOffset + (int) mCurrentTouchOffset;
+                int durrentTouchOffset = (int) (deltaY * mDragRate);
+                mTotalOffset = mPreTotalOffset + durrentTouchOffset;
 
                 /*
                    视图的移动不能超过临界状态
@@ -475,11 +483,12 @@ public class DragRefreshLayout extends ViewGroup {
      * 根据偏移移动视图，该方法维护视图状态并通知listener视图的移动
      */
     private void move() {
+        int distance = mTotalOffset - mLayoutOffset;
 
-        int currentTop = mMainView.getTop();
-        int distance = mTotalOffset - currentTop;
+        if(mMainView != null) {
+            mMainView.offsetTopAndBottom(distance);
+        }
 
-        mMainView.offsetTopAndBottom(distance);
         if (mTopView != null) {
             mTopView.offsetTopAndBottom(distance);
         }
@@ -487,6 +496,8 @@ public class DragRefreshLayout extends ViewGroup {
         if (mBottomView != null) {
             mBottomView.offsetTopAndBottom(distance);
         }
+
+        mLayoutOffset = mTotalOffset;
 
 
         //----------------------
