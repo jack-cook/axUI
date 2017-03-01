@@ -265,11 +265,11 @@ public class DragRefreshLayout extends ViewGroup {
 
         //子视图能处理
         if (deltaY != 0 && canChildScroll(-deltaY)) {
-            mMoveRecorder.reset();
+            mMoveRecorder.newStartPoint(ev);
             return false;
         }
 
-        //正处在偏移状态，可拖动
+        //正处在偏移状态，可i拖动
         if (mViewState != VIEW_STATE_HOME) {
             mMoveRecorder.reset();
             return true;
