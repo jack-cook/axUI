@@ -5,12 +5,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:bottomViewId="@+id/footer"
     app:topViewId="@+id/header">
-    <TextView
+    <ListView
+        android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="hdshfaksdfh"
-        android:background="@color/colorAccent"
-        />
+        android:layout_height="match_parent"></ListView>
     <TextView
         android:id="@+id/header"
         android:layout_width="match_parent"

@@ -262,8 +262,9 @@ public class DragRefreshLayout extends ViewGroup {
         mMoveRecorder.record(ev);
         final int deltaY = (int) mMoveRecorder.getDeltaY();
 
+
         //子视图能处理
-        if (canChildScroll(deltaY)) {
+        if (deltaY != 0 && canChildScroll(-deltaY)) {
             mMoveRecorder.reset();
             return false;
         }
@@ -370,7 +371,11 @@ public class DragRefreshLayout extends ViewGroup {
         return true;
     }
 
-    protected boolean canChildScroll(int upOrDown) {
+    /**
+     * @param upOrDown positive to check scroll down, negative to check scroll up
+     * @return
+     */
+    protected boolean canChildScroll(final int upOrDown) {
         if (mMainView == null) {
             return false;
         }
@@ -419,7 +424,7 @@ public class DragRefreshLayout extends ViewGroup {
         stopAnimation();
 
         int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * (Math.abs(mTotalOffset - mStopOffsetTop) / (float) mStopOffsetTop));
-        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+        if (duration > MAX_OFFSET_ANIMATION_DURATION)
             duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetTop);
         mCurrentAnimator.setDuration(duration);
@@ -430,7 +435,7 @@ public class DragRefreshLayout extends ViewGroup {
         stopAnimation();
 
         int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs((mTotalOffset - mStopOffsetBottom) / (float) mStopOffsetBottom));
-        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+        if (duration > MAX_OFFSET_ANIMATION_DURATION)
             duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", mStopOffsetBottom);
         mCurrentAnimator.setDuration(duration);
@@ -440,8 +445,8 @@ public class DragRefreshLayout extends ViewGroup {
     private void startToTopAnimation() {
         stopAnimation();
 
-        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float)mTotalOffset )/ mStopOffsetTop));
-        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float) mTotalOffset) / mStopOffsetTop));
+        if (duration > MAX_OFFSET_ANIMATION_DURATION)
             duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
         mCurrentAnimator.setDuration(duration);
@@ -451,8 +456,8 @@ public class DragRefreshLayout extends ViewGroup {
     private void startToBottomAnimation() {
         stopAnimation();
 
-        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float)mTotalOffset )/ mStopOffsetBottom));
-        if(duration > MAX_OFFSET_ANIMATION_DURATION)
+        int duration = (int) (MAX_OFFSET_ANIMATION_DURATION * Math.abs(((float) mTotalOffset) / mStopOffsetBottom));
+        if (duration > MAX_OFFSET_ANIMATION_DURATION)
             duration = MAX_OFFSET_ANIMATION_DURATION;
         mCurrentAnimator = ObjectAnimator.ofInt(mAnimatorMoveTargetObject, "totalOffset", 0);
         mCurrentAnimator.setDuration(duration);
@@ -697,28 +702,28 @@ public class DragRefreshLayout extends ViewGroup {
     }
 
     public void addTopRefreshListener(RefreshListener refreshListener) {
-        if(refreshListener == null || mTopRefreshListeners.contains(refreshListener))
+        if (refreshListener == null || mTopRefreshListeners.contains(refreshListener))
             return;
 
         mTopRefreshListeners.add(refreshListener);
     }
 
     public void addBottomRefreshListener(RefreshListener refreshListener) {
-        if(refreshListener == null || mBottomRefreshListeners.contains(refreshListener))
+        if (refreshListener == null || mBottomRefreshListeners.contains(refreshListener))
             return;
 
         mBottomRefreshListeners.add(refreshListener);
     }
 
     public void removeTopRefreshListener(RefreshListener refreshListener) {
-        if(refreshListener == null)
+        if (refreshListener == null)
             return;
 
         mTopRefreshListeners.remove(refreshListener);
     }
 
     public void removeBottomRefreshListener(RefreshListener refreshListener) {
-        if(refreshListener == null)
+        if (refreshListener == null)
             return;
 
         mBottomRefreshListeners.remove(refreshListener);
