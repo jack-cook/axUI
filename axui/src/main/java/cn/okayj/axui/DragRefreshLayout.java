@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.CallSuper;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -32,12 +33,17 @@ public class DragRefreshLayout extends ViewGroup {
 
     private static final int MAX_OFFSET_ANIMATION_DURATION = 300;
 
-
     private static final int VIEW_STATE_OFFSET_TOP = 1;
 
     private static final int VIEW_STATE_HOME = 0;//no offset
 
     private static final int VIEW_STATE_OFFSET_BOTTOM = -1;
+
+    private static final int FLAG_TRY_ACROSS_UP = 1;
+
+    private static final int FLAG_TRY_ACROSS_DOWN = -1;
+
+    private static final int FLAG_TRY_ACROSS_NONE = 0;
 
 
     private MoveRecorder mMoveRecorder = new MoveRecorder();
@@ -76,6 +82,8 @@ public class DragRefreshLayout extends ViewGroup {
     private boolean mDragging;
 
     private int mViewState = VIEW_STATE_HOME;
+
+    private int mCrossEdgeFlag = FLAG_TRY_ACROSS_NONE;
 
     private Interpolator mDecelerateInterpolator = new DecelerateInterpolator(2f);
 
@@ -313,20 +321,6 @@ public class DragRefreshLayout extends ViewGroup {
         mMoveRecorder.record(event);
         final int deltaY = (int) mMoveRecorder.getDeltaY();
 
-        /*
-        //--------------------------
-        //如果处于临界状态，不处理，转交事件
-        //---------------------------
-        if(mTotalOffset == 0){
-            if(deltaY > 0){
-                if(!mRefreshTopEnabled)
-                    return false;
-            }else if(deltaY < 0){
-                if(!mRefreshBottomEnabled)
-                    return false;
-            }
-        }
-        */
 
         switch (action) {
             //---------------------
@@ -334,7 +328,6 @@ public class DragRefreshLayout extends ViewGroup {
             //---------------------
             case MotionEvent.ACTION_UP:
                 mMoveRecorder.reset();
-                mDragging = false;
                 onDragEnd(true);
                 break;
             //--------------------------
@@ -342,7 +335,6 @@ public class DragRefreshLayout extends ViewGroup {
             //--------------------------
             case MotionEvent.ACTION_CANCEL:
                 mMoveRecorder.reset();
-                mDragging = false;
                 onDragEnd(false);
                 break;
             //-------------------------
@@ -350,20 +342,80 @@ public class DragRefreshLayout extends ViewGroup {
             //-------------------------
             case MotionEvent.ACTION_MOVE:
                 int durrentTouchOffset = (int) (deltaY * mDragRate);
+                int lastTotalOffset = mTotalOffset;
                 mTotalOffset = mPreTotalOffset + durrentTouchOffset;
 
                 /*
                    视图的移动不能超过临界状态
                  */
-                if (mTotalOffset > 0 && !mRefreshTopEnabled) {
-                    mPreTotalOffset = mPreTotalOffset - mTotalOffset;//反向偏移，使totalOffset 处于0
+                /*boolean stick = false;
+                if ((mTotalOffset > 0 && !mRefreshTopEnabled) || (mTotalOffset < 0 && !mRefreshBottomEnabled)) {
                     mTotalOffset = 0;
-                } else if (mTotalOffset < 0 && !mRefreshBottomEnabled) {
-                    mPreTotalOffset = mPreTotalOffset - mTotalOffset;//反向偏移，使totalOffset 处于0
-                    mTotalOffset = 0;
+                    mPreTotalOffset = 0;
+                    mMoveRecorder.newStartPoint(event);
+                    stick = true;
+                }*/
+
+                /*
+                 * 视图一次只能处在下拉或上拉的状态，不能跨状态，看看子视图能不能接着处理?。
+                 */
+                if(lastTotalOffset == 0){
+                    if(mTotalOffset > 0 && (mCrossEdgeFlag == FLAG_TRY_ACROSS_DOWN || ! mRefreshTopEnabled)){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+                    }else if(mTotalOffset < 0 && (mCrossEdgeFlag == FLAG_TRY_ACROSS_UP || ! mRefreshBottomEnabled)){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+                    }
+                }else {
+                    if(lastTotalOffset > 0 && mTotalOffset <= 0){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+
+                        mCrossEdgeFlag = FLAG_TRY_ACROSS_UP;
+                    }else if(lastTotalOffset < 0 && mTotalOffset >= 0 ){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+
+                        mCrossEdgeFlag = FLAG_TRY_ACROSS_DOWN;
+                    }
                 }
 
+                /*if (lastTotalOffset > 0 && mTotalOffset < 0) {
+                    mCrossEdgeFlag = FLAG_TRY_ACROSS_UP;
+
+                    mTotalOffset = 0;
+                    mPreTotalOffset = 0;
+                    mMoveRecorder.newStartPoint(event);
+                } else if (lastTotalOffset < 0 && mTotalOffset > 0) {
+                    mCrossEdgeFlag = FLAG_TRY_ACROSS_DOWN;
+
+                    mTotalOffset = 0;
+                    mPreTotalOffset = 0;
+                    mMoveRecorder.newStartPoint(event);
+                }else if(lastTotalOffset ==0) {
+                    if(mTotalOffset > 0 && mCrossEdgeFlag == FLAG_TRY_ACROSS_DOWN){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+                    }else if(mTotalOffset < 0 && mCrossEdgeFlag == FLAG_TRY_ACROSS_UP){
+                        mTotalOffset = 0;
+                        mPreTotalOffset = 0;
+                        mMoveRecorder.newStartPoint(event);
+                    }else {
+                        mCrossEdgeFlag = FLAG_TRY_ACROSS_NONE;
+                    }
+                }*/
+
                 move();
+
+                if(mTotalOffset != 0){
+                    mCrossEdgeFlag = FLAG_TRY_ACROSS_NONE;
+                }
 
                 break;
         }
@@ -477,6 +529,9 @@ public class DragRefreshLayout extends ViewGroup {
      * @param tryTriggerRefresh
      */
     private void onDragEnd(boolean tryTriggerRefresh) {
+        mDragging = false;
+        mCrossEdgeFlag = FLAG_TRY_ACROSS_NONE;
+
         if (mTotalOffset > 0) {
             if (mTotalOffset >= mStopOffsetTop) {
                 if (mRefreshingTop) {
@@ -698,6 +753,8 @@ public class DragRefreshLayout extends ViewGroup {
         mTotalOffset = 0;
         mRefreshingTop = false;
         mRefreshingBottom = false;
+        mViewState = VIEW_STATE_HOME;
+        mCrossEdgeFlag = FLAG_TRY_ACROSS_NONE;
         stopAnimation();
     }
 
