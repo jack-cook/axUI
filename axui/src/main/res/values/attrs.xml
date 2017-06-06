@@ -35,6 +35,11 @@
         <attr name="adjust_to"/>
     </declare-styleable>
 
+    <declare-styleable name="RatioRelativeLayout">
+        <attr name="ratio"/>
+        <attr name="adjust_to"/>
+    </declare-styleable>
+
     <declare-styleable name="RatioImageView">
         <attr name="ratio"/>
         <attr name="adjust_to"/>
