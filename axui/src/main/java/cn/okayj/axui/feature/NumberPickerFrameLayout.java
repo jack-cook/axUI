@@ -29,6 +29,7 @@ import cn.okayj.axui.R;
 /**
  * Created by Jack on 16/5/7.
  */
+@Deprecated
 public class NumberPickerFrameLayout extends FrameLayout {
     public static final int FLAG_NUMBER_TOO_LARGE = 1;
     public static final int FLAG_NUMBER_TOO_SMALL = -1;
