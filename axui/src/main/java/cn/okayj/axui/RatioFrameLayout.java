@@ -61,7 +61,7 @@ public class RatioFrameLayout extends FrameLayout implements RatioView {
         if (mRatio < 0) {
             mRatio = RATIO_DEFAULT;
         }
-        mAdjustTo = a.getInt(R.styleable.RatioFrameLayout_adjust_to, ADJUST_DEFAULT);
+        mAdjustTo = a.getInt(R.styleable.RatioFrameLayout_adjustTo, ADJUST_DEFAULT);
         a.recycle();
     }
 

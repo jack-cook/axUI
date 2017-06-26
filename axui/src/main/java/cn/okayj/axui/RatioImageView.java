@@ -61,7 +61,7 @@ public class RatioImageView extends ImageView implements RatioView {
         if (mRatio < 0) {
             mRatio = RATIO_DEFAULT;
         }
-        mAdjustTo = a.getInt(R.styleable.RatioImageView_adjust_to, ADJUST_DEFAULT);
+        mAdjustTo = a.getInt(R.styleable.RatioImageView_adjustTo, ADJUST_DEFAULT);
         a.recycle();
     }
 

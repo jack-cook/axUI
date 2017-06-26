@@ -20,7 +20,7 @@
     <attr name="number" format="integer"/>
     <attr name="step" format="integer"/>
 
-    <attr name="adjust_to" format="enum">
+    <attr name="adjustTo" format="enum">
         <enum name="height" value="1" />
         <enum name="width" value="2"/>
     </attr>
@@ -31,17 +31,17 @@
 
     <declare-styleable name="RatioFrameLayout">
         <attr name="ratio"/>
-        <attr name="adjust_to"/>
+        <attr name="adjustTo"/>
     </declare-styleable>
 
     <declare-styleable name="RatioRelativeLayout">
         <attr name="ratio"/>
-        <attr name="adjust_to"/>
+        <attr name="adjustTo"/>
     </declare-styleable>
 
     <declare-styleable name="RatioImageView">
         <attr name="ratio"/>
-        <attr name="adjust_to"/>
+        <attr name="adjustTo"/>
     </declare-styleable>
 
     <declare-styleable name="NumberPickerFrameLayout">

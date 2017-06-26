@@ -6,7 +6,7 @@
     <cn.okayj.axui.RatioImageView
         android:layout_width="0dp"
         android:layout_height="100dp"
-        app:adjust_to="height"
+        app:adjustTo="height"
         app:ratio="2"
         android:src="@android:drawable/arrow_down_float"
         android:scaleType="centerCrop"

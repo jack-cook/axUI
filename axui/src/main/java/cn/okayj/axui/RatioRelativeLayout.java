@@ -46,7 +46,7 @@ public class RatioRelativeLayout extends RelativeLayout implements RatioView {
         if (mRatio < 0) {
             mRatio = RATIO_DEFAULT;
         }
-        mAdjustTo = a.getInt(R.styleable.RatioRelativeLayout_adjust_to, ADJUST_DEFAULT);
+        mAdjustTo = a.getInt(R.styleable.RatioRelativeLayout_adjustTo, ADJUST_DEFAULT);
         a.recycle();
     }
 
