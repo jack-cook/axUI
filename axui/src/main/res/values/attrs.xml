@@ -26,7 +26,6 @@
     </attr>
     <attr name="adjust_to_bound" format="boolean"/>
 
-    <attr name="maxHeight" format="dimension"/>
     <attr name="minNumber" format="integer"/>
     <attr name="maxNumber" format="integer"/>
 
@@ -43,10 +42,6 @@
     <declare-styleable name="RatioImageView">
         <attr name="ratio"/>
         <attr name="adjust_to"/>
-    </declare-styleable>
-
-    <declare-styleable name="SelfAdaptionScrollView">
-        <attr name="maxHeight"/>
     </declare-styleable>
 
     <declare-styleable name="NumberPickerFrameLayout">
