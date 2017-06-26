@@ -18,16 +18,11 @@
 <resources>
     <attr name="ratio" format="float"/>
     <attr name="number" format="integer"/>
-    <attr name="step" format="integer"/>
 
     <attr name="adjustTo" format="enum">
         <enum name="height" value="1" />
         <enum name="width" value="2"/>
     </attr>
-    <attr name="adjust_to_bound" format="boolean"/>
-
-    <attr name="minNumber" format="integer"/>
-    <attr name="maxNumber" format="integer"/>
 
     <declare-styleable name="RatioFrameLayout">
         <attr name="ratio"/>
@@ -42,19 +37,6 @@
     <declare-styleable name="RatioImageView">
         <attr name="ratio"/>
         <attr name="adjustTo"/>
-    </declare-styleable>
-
-    <declare-styleable name="NumberPickerFrameLayout">
-        <attr name="pickerTextViewId" format="reference" />
-        <attr name="pickerPlusButtonId" format="reference" />
-        <attr name="pickerMinusButtonId" format="reference" />
-        <attr name="pickerPlusAutoActivated" format="boolean"/>
-        <attr name="pickerMinusAutoActivated" format="boolean"/>
-        <attr name="number"/>
-        <attr name="minNumber"/>
-        <attr name="maxNumber"/>
-        <attr name="step"/>
-        <attr name="adjust_to_bound"/>
     </declare-styleable>
 
     <declare-styleable name="FlowLayout">

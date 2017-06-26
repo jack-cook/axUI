@@ -23,44 +23,35 @@ import cn.okayj.axui.R;
 /**
  * Created by Jack on 16/4/20.
  */
-public abstract class ViewHolder<T> {
+public abstract class ViewHolder<I> {
     private static final String CLASS_NAME = ViewHolder.class.getName();
     private static final int ID_VIEW_TAG_HOLDER = R.id.view_tag_holder;
 
     public final View itemView;
 
-    private T item;
+    private I item;
 
     public ViewHolder(View itemView) {
         this.itemView = itemView;
         itemView.setTag(ID_VIEW_TAG_HOLDER,this);
     }
 
-    public ViewHolder bindView() {
-        onBindView(itemView);
-        return this;
-    }
-
     public static <VH> Object getHolder(View itemView){
         VH viewHolder = (VH) itemView.getTag(ID_VIEW_TAG_HOLDER);
         if(viewHolder == null){
-            throw new RuntimeException("The view is not yet "+ CLASS_NAME + "supported");
+            throw new IllegalStateException("The view is not yet "+ CLASS_NAME + "supported");
         }
         return viewHolder;
     }
 
-    public void setItem(T item){
+    public void setItem(I item){
         this.item = item;
-        onSetItem(item);
+        onItemSet(item);
     }
 
-    protected void onSetItem(T item){}
+    protected void onItemSet(I item){}
 
-    public T getItem(){
+    public I getItem(){
         return item;
-    }
-
-    protected void onBindView(View itemView){
-
     }
 }
