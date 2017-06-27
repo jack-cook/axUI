@@ -11,6 +11,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,8 @@ import java.util.List;
  * Created by huangkaijie on 16/8/20.
  */
 public class FlowLayout extends ViewGroup {
+
+    @Retention(RetentionPolicy.SOURCE)
     @IntDef({HORIZONTAL,VERTICAL})
     public @interface OrientationMode{}
 

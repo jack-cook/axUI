@@ -25,7 +25,7 @@ android {
 }
 
 ext {
-    pkgVersion = "0.1.2";
+    pkgVersion = "0.9";
 }
 
 
@@ -81,7 +81,7 @@ install {
     }
 }
 
-void init(){
+void init() {
     Properties localProperties = new Properties();
     localProperties.load(new FileInputStream(file('../local.properties')));
     ext {
@@ -93,7 +93,8 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile "com.android.support:recyclerview-v7:${SUPPORT_PACKAGE_VERSION}"
-    compile 'cn.okayj:axui:0.1.2'
+    compile 'cn.okayj:axui:0.9'
+//    compile project(':axui')
 }
 
 task sourcesJar(type: Jar) {
